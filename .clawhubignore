@@ -1,0 +1,10 @@
+README.md
+LICENSE
+.git/
+.github/
+tests/
+*.test.*
+.env
+.env.*
+node_modules/
+.DS_Store
