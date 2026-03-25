@@ -188,7 +188,7 @@ Run this when no `[onboarding]` memory exists.
 If `[plan]` is `cloud`, call the DontDie API to register:
 
 ```bash
-curl -X POST "https://dontdie-api.vercel.app/api/register" \
+curl -X POST "https://api-five-eta-64.vercel.app/api/register" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "{name}",

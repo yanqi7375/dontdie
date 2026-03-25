@@ -131,20 +131,35 @@ SMS to Mom:
 
 ## Self-Hosting
 
-```bash
-git clone https://github.com/openclaw/dontdie.git
-cd dontdie
+1. **Clone the repo:**
+   ```bash
+   git clone https://github.com/yanqi7375/dontdie.git
+   cd dontdie
+   ```
 
-cp .env.example .env
-# Fill in: REDIS_URL, TWILIO_SID, TWILIO_TOKEN, SENDGRID_KEY, NEON_DB_URL
+2. **Set up the database:**
+   ```bash
+   psql $NEON_DATABASE_URL < api/schema.sql
+   ```
 
-npm install
-npm run deploy
-```
+3. **Configure environment:**
+   ```bash
+   cp api/.env.example api/.env
+   ```
+   Fill in your keys: `REDIS_URL`, `TWILIO_SID`, `TWILIO_TOKEN`, `SENDGRID_KEY`, `NEON_DB_URL`
+
+4. **Deploy:**
+   ```bash
+   cd api && vercel --prod
+   ```
+
+5. **Install the skill:**
+   ```bash
+   clawhub install dontdie
+   ```
+   Or manually copy `skill/` to `~/.openclaw/workspace/skills/dontdie/`.
 
 Requires: Node 20+, a Redis instance, Twilio account, SendGrid account, and a Neon database.
-
-See [`docs/self-hosting.md`](docs/self-hosting.md) for the full guide.
 
 ## Tech Stack
 

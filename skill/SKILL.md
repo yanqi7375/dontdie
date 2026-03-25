@@ -211,13 +211,32 @@ If contacts were already notified, use the Resolution flow instead.
 
 ---
 
-## 24-Hour Escalation
+## Escalation System (Two-Level)
 
-When escalation cron fires:
+### Level 1: 24-Hour Escalation (Gentle)
+
+When the 24h escalation cron fires:
 1. `memory_recall` → `[checkin-status]`. If completed → exit.
-2. If still pending → recall contacts, location, user info.
-3. Use **Notification Dispatch** with `type: "escalation"`.
-4. Log event in memory.
+2. If still pending → recall contacts, location, medical, user info.
+3. Use **Notification Dispatch** with `type: "escalation"` — this sends a GENTLE message asking contacts to give the user a call.
+4. Create a SECOND one-shot cron `dontdie-escalation-48h-{date}` for 48 hours after original check-in.
+5. `memory_store` → `[escalation-48h-cron-id] {cron_id}`
+6. Log event in memory.
+
+### Level 2: 48-Hour Escalation (URGENT)
+
+When the 48h escalation cron fires:
+1. `memory_recall` → `[checkin-status]`. If completed → exit. Also check `[escalation-resolved]`.
+2. If STILL no reply after 48 hours → this is serious.
+3. Recall contacts, location, medical info.
+4. Use **Notification Dispatch** with `type: "escalation_48h"` — this sends an URGENT message telling contacts to go to the user's home or call police for a welfare check.
+5. Log event in memory.
+
+### When User Finally Replies After Escalation
+1. Update check-in status to completed.
+2. Remove any pending escalation crons (24h and 48h).
+3. Send `type: "resolved"` to contacts.
+4. Reply: "there you are. your people were worried. {streak reset to 0}. 🦞"
 
 ---
 

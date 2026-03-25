@@ -39,32 +39,191 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const results = { sms: [] as string[], email: [] as string[], errors: [] as string[] };
+  const now = new Date().toLocaleString("en-US", { timeZone: "UTC", dateStyle: "medium", timeStyle: "short" }) + " UTC";
 
-  // Build notification message based on type
+  // Build detailed notification messages
   let smsBody: string;
   let emailSubject: string;
   let emailBody: string;
 
+  // Medical card block (reused across types)
+  const medicalBlock = medical
+    ? `\n🏥 MEDICAL INFO:\n${medical}\n`
+    : "";
+  const locationBlock = location
+    ? `\n📍 LOCATION: ${location}\n`
+    : "";
+  const symptomsBlock = symptoms
+    ? `\n⚠️ SYMPTOMS: ${symptoms}\n`
+    : "";
+
   switch (type) {
     case "sos":
-      smsBody = `🚨 EMERGENCY from DontDie: ${userName} triggered an SOS alert.${location ? ` Location: ${location}.` : ""}${symptoms ? ` Symptoms: ${symptoms}.` : ""}${medical ? ` Medical: ${medical}.` : ""} Please check on them immediately.`;
-      emailSubject = `🚨 EMERGENCY: ${userName} triggered an SOS alert`;
-      emailBody = `${userName} has triggered an emergency SOS alert via DontDie.\n\n${location ? `📍 Location: ${location}\n` : ""}${symptoms ? `🏥 Symptoms: ${symptoms}\n` : ""}${medical ? `💊 Medical info: ${medical}\n` : ""}\nPlease try to reach them immediately. If you cannot, consider calling local emergency services.`;
+      smsBody = [
+        `🚨 EMERGENCY ALERT — DontDie`,
+        ``,
+        `${userName} has triggered an SOS at ${now}.`,
+        location ? `📍 Location: ${location}` : `📍 Location: unknown`,
+        symptoms ? `⚠️ Symptoms: ${symptoms}` : ``,
+        medical ? `🏥 Medical: ${medical}` : ``,
+        ``,
+        `⟹ PLEASE DO ONE OF THESE NOW:`,
+        `1. Try calling ${userName} immediately`,
+        `2. If no answer, call local emergency services (120/911/112)`,
+        `3. Go to their location if you can`,
+        ``,
+        `This is an automated alert from DontDie 🦞`,
+      ].filter(Boolean).join("\n");
+
+      emailSubject = `🚨 EMERGENCY: ${userName} needs help — SOS triggered at ${now}`;
+      emailBody = [
+        `EMERGENCY ALERT`,
+        `═══════════════════════════════════`,
+        ``,
+        `${userName} has triggered an SOS emergency alert.`,
+        ``,
+        `⏰ TIME: ${now}`,
+        locationBlock,
+        symptomsBlock,
+        medicalBlock,
+        `═══════════════════════════════════`,
+        `WHAT YOU SHOULD DO:`,
+        `═══════════════════════════════════`,
+        ``,
+        `1. Try calling ${userName} RIGHT NOW`,
+        `2. If they don't answer, call local emergency services:`,
+        `   • China: 120`,
+        `   • US/Canada: 911`,
+        `   • EU: 112`,
+        `   • UK: 999`,
+        `   • Australia: 000`,
+        `3. If you're nearby, go to their location immediately`,
+        `4. If you reach them, reply to this email so we can update others`,
+        ``,
+        `This message was sent because ${userName} listed you as an emergency contact on DontDie.`,
+        `DontDie is an AI safety tool that monitors daily well-being. 🦞`,
+      ].filter(Boolean).join("\n");
       break;
+
     case "escalation":
-      smsBody = `⚠️ SAFETY ALERT from DontDie: ${userName} has not responded to their daily alive-check for 24 hours.${location ? ` Last known location: ${location}.` : ""} Please try to reach them.`;
-      emailSubject = `⚠️ ${userName} missed their DontDie alive-check (24 hours)`;
-      emailBody = `${userName} has not responded to their daily DontDie alive-check for 24 hours.\n\n${location ? `📍 Last known location: ${location}\n` : ""}\nPlease try to reach them and confirm they are safe.`;
+      // 24h — gentle, just ask to call
+      smsBody = [
+        `📞 Hey, this is DontDie (${userName}'s safety assistant).`,
+        ``,
+        `${userName} hasn't responded to their daily check-in for 24 hours.`,
+        `Could you give them a quick call to make sure they're okay?`,
+        location ? `📍 Last known location: ${location}` : ``,
+        ``,
+        `It's probably nothing — but a quick call would put everyone at ease. Thanks! 🦞`,
+      ].filter(Boolean).join("\n");
+
+      emailSubject = `📞 Can you check on ${userName}? (24h no response — DontDie)`;
+      emailBody = [
+        `Hey there,`,
+        ``,
+        `${userName} hasn't responded to their daily DontDie alive-check for 24 hours.`,
+        ``,
+        `Could you please give them a call or text to make sure everything is okay?`,
+        ``,
+        `⏰ Last check-in: ${now}`,
+        locationBlock,
+        medicalBlock,
+        `It's probably nothing — phone died, busy day, etc. But ${userName} set up DontDie`,
+        `specifically so someone would notice if they went quiet. That someone is you.`,
+        ``,
+        `A quick call is all it takes. Thank you! 🦞`,
+        ``,
+        `— DontDie (${userName}'s AI safety assistant)`,
+      ].filter(Boolean).join("\n");
       break;
+
+    case "escalation_48h":
+      // 48h — urgent, serious tone
+      smsBody = [
+        `🚨 URGENT — DontDie`,
+        ``,
+        `${userName} has been UNREACHABLE for 48 HOURS.`,
+        `They have not responded to any check-ins or messages.`,
+        location ? `📍 Last known location: ${location}` : `📍 Location: unknown`,
+        medical ? `🏥 Medical: ${medical}` : ``,
+        ``,
+        `⟹ ACTION REQUIRED:`,
+        `1. Call ${userName} NOW`,
+        `2. If no answer — go to their home or call police for a welfare check`,
+        `3. Emergency services: 120 (CN) / 911 (US) / 112 (EU)`,
+        ``,
+        `This is serious. 48 hours of silence is not normal. Please act now.`,
+        `— DontDie 🦞`,
+      ].filter(Boolean).join("\n");
+
+      emailSubject = `🚨 URGENT: ${userName} unreachable for 48 hours — please act now`;
+      emailBody = [
+        `⚠️ URGENT SAFETY ALERT — 48 HOURS NO RESPONSE`,
+        `═══════════════════════════════════`,
+        ``,
+        `${userName} has been completely unreachable for 48 hours.`,
+        `No response to any check-ins, messages, or previous alerts.`,
+        ``,
+        `⏰ LAST SEEN: ${now}`,
+        locationBlock,
+        medicalBlock,
+        `═══════════════════════════════════`,
+        `ACTION REQUIRED — THIS IS SERIOUS`,
+        `═══════════════════════════════════`,
+        ``,
+        `1. Call ${userName} immediately — try multiple times`,
+        `2. If they don't answer, GO TO THEIR HOME if possible`,
+        `3. If you cannot go, call local police for a welfare check:`,
+        `   • China: 110 (police) / 120 (medical)`,
+        `   • US/Canada: 911`,
+        `   • EU: 112`,
+        `   • UK: 999`,
+        ``,
+        `48 hours of complete silence from someone living alone is a serious warning sign.`,
+        `Please take action now. Better to feel embarrassed than to be too late.`,
+        ``,
+        `— DontDie 🦞`,
+      ].filter(Boolean).join("\n");
+      break;
+
     case "resolved":
-      smsBody = `✅ UPDATE from DontDie: ${userName} has confirmed they are safe. Thank you for checking in.`;
+      smsBody = `✅ UPDATE from DontDie: ${userName} has confirmed they are safe at ${now}. Thank you for checking in. 🦞`;
       emailSubject = `✅ ${userName} is safe — DontDie update`;
-      emailBody = `Good news: ${userName} has confirmed they are safe.\n\nThank you for being there for them.`;
+      emailBody = [
+        `GOOD NEWS`,
+        `═══════════════════════════════════`,
+        ``,
+        `${userName} has confirmed they are safe at ${now}.`,
+        ``,
+        `Thank you for being there for them.`,
+        `If you already called emergency services, you may want to let them know the person is okay.`,
+        ``,
+        `— DontDie 🦞`,
+      ].join("\n");
       break;
+
+    case "location_update":
+      smsBody = `📍 LOCATION UPDATE for ${userName}: ${location || "unknown"}. SOS is still active. ${now}. — DontDie 🦞`;
+      emailSubject = `📍 Location update: ${userName} — SOS still active`;
+      emailBody = [
+        `LOCATION UPDATE`,
+        `═══════════════════════════════════`,
+        ``,
+        `${userName}'s location has been updated.`,
+        ``,
+        `⏰ TIME: ${now}`,
+        `📍 LOCATION: ${location || "unknown"}`,
+        ``,
+        `The SOS alert is still active. Please continue trying to reach them.`,
+        ``,
+        `— DontDie 🦞`,
+      ].join("\n");
+      break;
+
     default:
-      smsBody = message || `DontDie alert for ${userName}`;
+      smsBody = message || `DontDie alert for ${userName} at ${now}`;
       emailSubject = `DontDie alert: ${userName}`;
-      emailBody = message || `DontDie notification regarding ${userName}.`;
+      emailBody = message || `DontDie notification regarding ${userName} at ${now}.`;
   }
 
   // Send SMS via Twilio
