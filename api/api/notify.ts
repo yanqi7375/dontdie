@@ -1,3 +1,9 @@
+// Retry logic is handled by the calling agent (OpenClaw skill).
+// This endpoint is idempotent — safe to call multiple times for the same event.
+
+// TODO: Add rate limiting via Vercel KV or Upstash Redis
+// For now, Twilio/SendGrid have their own built-in rate limits
+
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { neon } from "@neondatabase/serverless";
 import twilio from "twilio";
@@ -8,10 +14,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  const apiKey = req.headers["x-api-key"] || req.headers.authorization?.replace("Bearer ", "");
+  if (process.env.DONTDIE_API_KEY && apiKey !== process.env.DONTDIE_API_KEY) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
   const { userId, type, userName, contacts, location, medical, symptoms, message } = req.body;
 
   if (!userId || !type || !contacts?.length) {
     return res.status(400).json({ error: "userId, type, and contacts are required" });
+  }
+
+  // Validate contacts
+  for (const contact of contacts) {
+    if (contact.phone && !/^\+\d{7,15}$/.test(contact.phone)) {
+      return res.status(400).json({ error: `Invalid phone format for ${contact.name}: must start with + followed by digits` });
+    }
+    if (contact.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) {
+      return res.status(400).json({ error: `Invalid email format for ${contact.name}` });
+    }
+  }
+  if (contacts.length > 10) {
+    return res.status(400).json({ error: "Maximum 10 contacts per notification" });
   }
 
   const results = { sms: [] as string[], email: [] as string[], errors: [] as string[] };
@@ -56,7 +80,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           });
           results.sms.push(contact.phone);
         } catch (err: any) {
-          results.errors.push(`SMS to ${contact.phone}: ${err.message}`);
+          console.error(err);
+          results.errors.push(`SMS to ${contact.phone}: Internal server error`);
         }
       }
     }
@@ -76,7 +101,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           });
           results.email.push(contact.email);
         } catch (err: any) {
-          results.errors.push(`Email to ${contact.email}: ${err.message}`);
+          console.error(err);
+          results.errors.push(`Email to ${contact.email}: Internal server error`);
         }
       }
     }

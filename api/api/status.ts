@@ -11,6 +11,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       version: "2.0.0",
     });
   } catch (err: any) {
-    return res.status(500).json({ status: "dead 💀", error: err.message });
+    console.error("Status check error:", err);
+    return res.status(500).json({ status: "dead 💀", error: "Database unavailable" });
   }
 }

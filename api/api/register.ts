@@ -6,12 +6,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  const apiKey = req.headers["x-api-key"] || req.headers.authorization?.replace("Bearer ", "");
+  if (process.env.DONTDIE_API_KEY && apiKey !== process.env.DONTDIE_API_KEY) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
   const sql = neon(process.env.NEON_DATABASE_URL!);
   const { name, openclawUserId, language, checkinTime, timezone, contacts } =
     req.body;
 
   if (!name || !openclawUserId || !contacts?.length) {
     return res.status(400).json({ error: "name, openclawUserId, and contacts are required" });
+  }
+
+  // Validate contacts format
+  for (const contact of contacts) {
+    if (!contact.name) {
+      return res.status(400).json({ error: "Each contact must have a name" });
+    }
+    if (contact.phone && !/^\+\d{7,15}$/.test(contact.phone)) {
+      return res.status(400).json({ error: `Invalid phone for ${contact.name}: must start with + and have 7-15 digits` });
+    }
+    if (contact.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) {
+      return res.status(400).json({ error: `Invalid email for ${contact.name}` });
+    }
+    if (!contact.phone && !contact.email) {
+      return res.status(400).json({ error: `${contact.name} needs at least a phone or email` });
+    }
+  }
+  if (contacts.length > 10) {
+    return res.status(400).json({ error: "Maximum 10 contacts" });
   }
 
   try {
@@ -38,6 +62,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({ userId: user.id });
   } catch (err: any) {
-    return res.status(500).json({ error: err.message });
+    console.error("Registration error:", err);
+    return res.status(500).json({ error: "Registration failed" });
   }
 }

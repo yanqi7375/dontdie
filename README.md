@@ -40,7 +40,7 @@ Done. You're now harder to kill.
 - **Daily alive-check** — Every day, your AI asks if you're okay. Reply anything to confirm.
 - **SOS** — Type `SOS` and your emergency contacts get an SMS + email within seconds.
 - **24-hour escalation** — Miss the check-in? Contacts get notified automatically.
-- **Silent distress codes** *(Cloud plan)* — Set a secret phrase that triggers a silent SOS. For when "I'm fine" doesn't mean fine.
+- **Silent distress codes** *(Premium — coming soon)* — Set a secret phrase that triggers a silent SOS. For when "I'm fine" doesn't mean fine.
 
 ## How It Works
 
@@ -84,7 +84,7 @@ You: SOS
     - Jake (SMS + Email)
     - Dr. Chen (Email)
 
-    Type CANCEL within 5 minutes to stand down.
+    Type **cancel** within 5 minutes to stand down (before contacts are notified).
 ```
 
 ### Onboarding
@@ -164,9 +164,11 @@ See [`docs/self-hosting.md`](docs/self-hosting.md) for the full guide.
 
 Built with support from
 
-[**Redis**](https://redis.io) — State and memory infrastructure
+### [Redis](https://redis.io)
+DontDie uses Redis as its core state and memory layer — storing check-in status, managing 24-hour escalation timers, and powering the real-time pub/sub that triggers SOS alerts within seconds.
 
-[**Civic**](https://civic.com) — Identity verification via MCP Gateway
+### [Civic](https://civic.com)
+Civic's MCP Gateway provides the identity verification layer that protects emergency contact management — ensuring only verified users can add, modify, or remove the people who get notified when it matters most.
 
 </div>
 

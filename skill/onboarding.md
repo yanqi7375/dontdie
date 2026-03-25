@@ -81,8 +81,9 @@ Run this when no `[onboarding]` memory exists.
 > - `TWILIO_AUTH_TOKEN` — your Twilio auth token
 > - `TWILIO_PHONE_NUMBER` — your Twilio phone number (with +country code)
 >
-> **For Email (SendGrid via Maton):**
-> - `MATON_API_KEY` — your Maton API key for SendGrid access
+> **For Email (SendGrid):**
+> - `SENDGRID_API_KEY` — your SendGrid API key
+> - `SENDGRID_FROM_EMAIL` — your verified sender email (This must be a verified sender in your SendGrid account.)
 >
 > don't have these yet? no worries — set them up later. but SMS and email won't fire until you do. I'll still nag you every day either way. 🦞
 
@@ -96,8 +97,9 @@ Run this when no `[onboarding]` memory exists.
 > - `TWILIO_AUTH_TOKEN` — 你的 Twilio 认证令牌
 > - `TWILIO_PHONE_NUMBER` — 你的 Twilio 电话号码（带+国家代码）
 >
-> **邮件 (SendGrid via Maton):**
-> - `MATON_API_KEY` — 你的 Maton API 密钥
+> **邮件 (SendGrid):**
+> - `SENDGRID_API_KEY` — 你的 SendGrid API 密钥
+> - `SENDGRID_FROM_EMAIL` — 你的已验证发件人邮箱（必须是你 SendGrid 账号中已验证的发件人。）
 >
 > 还没有这些？没关系，以后再配。但配好之前短信和邮件发不出去。不过我每天照样烦你就是了。🦞
 
@@ -172,6 +174,7 @@ Run this when no `[onboarding]` memory exists.
 > 建议：选你肯定醒着的时间。除非你想让你妈凌晨3点收到恐慌短信。
 
 → Parse time + infer timezone from context
+→ If user only says a time without timezone, ask: "and what timezone? (like EST, PST, GMT+8, or just tell me your city)"
 → If no response or "default": use 09:00
 → Store `[checkin-time]`
 → Create cron job `dontdie-checkin`
@@ -209,6 +212,13 @@ curl -X POST "https://dontdie-api.vercel.app/api/register" \
 
 If the API call fails:
 > hmm. the cloud registration hit a snag. I'll retry, but worst case we can switch to self-hosted. your data is saved locally either way. 🦞
+
+### If cloud registration fails:
+If the API returns an error or is unreachable:
+1. Generate a local UUID as fallback: memory_store([user-id], {generated_uuid})
+2. Tell the user: "hmm, cloud registration hiccupped. your data is saved locally. I'll retry connecting to the cloud later. everything still works. 🦞"
+3. Store [plan-status] pending-registration
+4. On next interaction, retry the POST /api/register call
 
 ### Self-hosted Registration
 
