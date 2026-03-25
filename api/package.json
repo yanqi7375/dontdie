@@ -1,0 +1,14 @@
+{
+  "name": "dontdie-api",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.0",
+    "twilio": "^5.0.0",
+    "@sendgrid/mail": "^8.0.0"
+  }
+}
