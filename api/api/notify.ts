@@ -3,7 +3,7 @@
 // Without the header, duplicate calls WILL send duplicate notifications.
 
 // TODO: Add rate limiting via Vercel KV or Upstash Redis
-// For now, Twilio/SendGrid have their own built-in rate limits
+// For now, Twilio/Resend have their own built-in rate limits
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { neon } from "@neondatabase/serverless";

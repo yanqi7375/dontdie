@@ -246,7 +246,6 @@ If `[plan]` is `cloud`, call the DontDie API to register:
 ```bash
 curl -X POST "https://api-five-eta-64.vercel.app/api/register" \
   -H "Content-Type: application/json" \
-  -H "X-Api-Key: $DONTDIE_API_KEY" \
   -d '{
     "name": "{name}",
     "openclawUserId": "{user_id}",
@@ -266,7 +265,7 @@ curl -X POST "https://api-five-eta-64.vercel.app/api/register" \
 
 → Include contact:2 in the contacts array if provided.
 → Store the returned userId: `[user-id] {userId}`
-→ Store the API key for future calls: `memory_store([api-key] {DONTDIE_API_KEY})`
+→ From the response, extract `apiKey` and store: `memory_store([api-key] {apiKey})`
 
 If the API call fails:
 > hmm. the cloud registration hit a snag. I'll retry, but worst case we can switch to self-hosted. your data is saved locally either way. 🦞
@@ -348,7 +347,7 @@ All keys stored during onboarding:
 | `[user-id]` | Step 6 | `[user-id] 550e8400-e29b-41d4-a716-446655440000` |
 | `[checkin-streak]` | Step 6 | `[checkin-streak] 0` |
 | `[onboarding]` | Step 6 | `[onboarding] completed=true` |
-| `[api-key]` | Step 6 | `[api-key] {DONTDIE_API_KEY}` (cloud plan only) |
+| `[api-key]` | Step 6 | `[api-key] {apiKey from /api/register response}` (cloud plan only) |
 
 ---
 

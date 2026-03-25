@@ -295,25 +295,25 @@ for each contact with a phone number:
     -d "Body={notification_body}"
 ```
 
-**Email via SendGrid:**
+**Email via Resend:**
 
-Requires: `SENDGRID_API_KEY`, `SENDGRID_FROM_EMAIL`
+Requires: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`
 
 ```bash
 for each contact with an email:
-  curl -X POST "https://api.sendgrid.com/v3/mail/send" \
-    -H "Authorization: Bearer $SENDGRID_API_KEY" \
+  curl -X POST "https://api.resend.com/emails" \
+    -H "Authorization: Bearer $RESEND_API_KEY" \
     -H "Content-Type: application/json" \
     -H "X-Idempotency-Key: sos-{user_id}-{timestamp}" \
     -d '{
-      "personalizations": [{"to": [{"email": "{contact_email}"}]}],
-      "from": {"email": "'$SENDGRID_FROM_EMAIL'"},
+      "from": "'$RESEND_FROM_EMAIL'",
+      "to": ["{contact_email}"],
       "subject": "{notification_subject}",
-      "content": [{"type": "text/plain", "value": "{notification_body}"}]
+      "text": "{notification_body}"
     }'
 ```
 
-Self-hosted plan calls Twilio/SendGrid directly from the agent using curl. It does NOT call the DontDie API endpoint. No server-side logging occurs — events are only logged in local memory.
+Self-hosted plan calls Twilio/Resend directly from the agent using curl. It does NOT call the DontDie API endpoint. No server-side logging occurs — events are only logged in local memory.
 
 **Notification body templates by type:**
 
@@ -342,7 +342,7 @@ After calling /api/notify, check the response:
 ### Fallback Behavior
 
 - **Cloud plan**: If the API returns an error, follow the **Handling Notification Response** logic above. Never tell the user contacts were notified unless the API confirmed it.
-- **Self-hosted plan**: If env vars are missing for a channel, skip that channel silently. If *both* SMS and email env vars are missing, warn the user: "no notification credentials configured. set TWILIO or SENDGRID env vars, or switch to cloud plan. 🦞"
+- **Self-hosted plan**: If env vars are missing for a channel, skip that channel silently. If *both* SMS and email env vars are missing, warn the user: "no notification credentials configured. set TWILIO or RESEND env vars, or switch to cloud plan. 🦞"
 
 ---
 
