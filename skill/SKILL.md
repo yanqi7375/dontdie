@@ -52,6 +52,7 @@ Store all user data via `memory_store` / `memory_recall` / `memory_forget`. Per-
 | `[medical]` | fact | `[medical] allergies=penicillin, conditions=asthma` |
 | `[onboarding]` | fact | `[onboarding] completed=true` |
 | `[plan]` | preference | `[plan] cloud` (default) or `[plan] self-hosted` |
+| `[api-key]` | entity | `[api-key] {DONTDIE_API_KEY}` (cloud plan only, set during registration) |
 | `[sos-event]` | fact | `[sos-event] id=001, triggered=..., resolved=false` |
 
 ---
@@ -248,9 +249,13 @@ All notifications (SOS, escalation, resolved) are routed through this logic. Che
 
 Send an HTTP POST to the DontDie API. This is the zero-config default — no env vars needed.
 
+The DontDie API requires authentication via `X-Api-Key` header. Cloud plan users receive their API key automatically during registration.
+
 ```bash
 curl -X POST "${DONTDIE_API_URL:-https://api-five-eta-64.vercel.app}/api/notify" \
   -H "Content-Type: application/json" \
+  -H "X-Api-Key: $DONTDIE_API_KEY" \
+  -H "X-Idempotency-Key: sos-{user_id}-{timestamp}" \
   -d '{
     "userId": "{user_id}",
     "type": "{type}",
@@ -275,6 +280,7 @@ Requires: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER`
 ```bash
 for each contact with a phone number:
   curl -X POST "https://api.twilio.com/2010-04-01/Accounts/$TWILIO_ACCOUNT_SID/Messages.json" \
+    -H "X-Idempotency-Key: sos-{user_id}-{timestamp}" \
     -u "$TWILIO_ACCOUNT_SID:$TWILIO_AUTH_TOKEN" \
     -d "From=$TWILIO_PHONE_NUMBER" \
     -d "To={contact_phone}" \
@@ -290,6 +296,7 @@ for each contact with an email:
   curl -X POST "https://api.sendgrid.com/v3/mail/send" \
     -H "Authorization: Bearer $SENDGRID_API_KEY" \
     -H "Content-Type: application/json" \
+    -H "X-Idempotency-Key: sos-{user_id}-{timestamp}" \
     -d '{
       "personalizations": [{"to": [{"email": "{contact_email}"}]}],
       "from": {"email": "'$SENDGRID_FROM_EMAIL'"},
@@ -308,9 +315,25 @@ Self-hosted plan calls Twilio/SendGrid directly from the agent using curl. It do
 | `escalation` | "⚠️ {user_name} missed their alive-check" | "{user_name} has not responded to their daily alive-check for 24 hours. Last known location: {location}. Please check on them." |
 | `resolved` | "✅ {user_name} is okay" | "{user_name} has confirmed they are safe. The alert has been resolved." |
 
+### Handling Notification Response
+
+After calling /api/notify, check the response:
+
+**If `success: true`:**
+- Tell user: "🚨 your contacts have been notified. {sms_count} SMS + {email_count} emails sent."
+
+**If `success: false` or HTTP error:**
+- DO NOT say contacts were notified
+- Tell user: "⚠️ I couldn't reach the notification server. PLEASE contact your emergency contacts yourself RIGHT NOW. Here are their numbers: {list contacts with phone numbers}"
+- Retry once after 30 seconds with an X-Idempotency-Key header
+- If retry also fails, keep telling the user to call their contacts directly
+
+**If `success: true` but with warnings (some contacts not reached):**
+- Tell user: "🚨 notified {sent} out of {total} contacts. couldn't reach: {list failed contacts}. please try contacting them directly."
+
 ### Fallback Behavior
 
-- **Cloud plan**: If the API returns an error, retry once after 30 seconds. If still failing, log the error and tell the user: "couldn't reach the notification server. please contact your people directly. 🦞"
+- **Cloud plan**: If the API returns an error, follow the **Handling Notification Response** logic above. Never tell the user contacts were notified unless the API confirmed it.
 - **Self-hosted plan**: If env vars are missing for a channel, skip that channel silently. If *both* SMS and email env vars are missing, warn the user: "no notification credentials configured. set TWILIO or SENDGRID env vars, or switch to cloud plan. 🦞"
 
 ---

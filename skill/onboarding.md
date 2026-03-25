@@ -42,7 +42,7 @@ Run this when no `[onboarding]` memory exists.
 > zero config. I handle SMS + email for you. just set up contacts and go. literally the "I don't want to think about infrastructure" option.
 >
 > **2. Self-hosted — free forever**
-> you bring your own Twilio + SendGrid. more work, but $0. the "I compile my own kernel" option.
+> you bring your own Twilio + Resend. more work, but $0. the "I compile my own kernel" option.
 >
 > which one? just say **cloud** or **self-hosted**.
 
@@ -51,7 +51,7 @@ Run this when no `[onboarding]` memory exists.
 > 零配置。短信和邮件我全包了。设置联系人就完事。适合不想折腾的人。
 >
 > **2. Self-hosted 自托管版 — 永久免费**
-> 你自己搞 Twilio 和 SendGrid。要折腾，但不花钱。适合喜欢自己编译内核的人。
+> 你自己搞 Twilio 和 Resend。要折腾，但不花钱。适合喜欢自己编译内核的人。
 >
 > 选哪个？说 **cloud** 或者 **self-hosted** 就行。
 
@@ -81,9 +81,9 @@ Run this when no `[onboarding]` memory exists.
 > - `TWILIO_AUTH_TOKEN` — your Twilio auth token
 > - `TWILIO_PHONE_NUMBER` — your Twilio phone number (with +country code)
 >
-> **For Email (SendGrid):**
-> - `SENDGRID_API_KEY` — your SendGrid API key
-> - `SENDGRID_FROM_EMAIL` — your verified sender email (This must be a verified sender in your SendGrid account.)
+> **For Email (Resend):**
+> - `RESEND_API_KEY=re_...`
+> - `RESEND_FROM_EMAIL=DontDie <onboarding@resend.dev>`
 >
 > don't have these yet? no worries — set them up later. but SMS and email won't fire until you do. I'll still nag you every day either way. 🦞
 
@@ -97,9 +97,9 @@ Run this when no `[onboarding]` memory exists.
 > - `TWILIO_AUTH_TOKEN` — 你的 Twilio 认证令牌
 > - `TWILIO_PHONE_NUMBER` — 你的 Twilio 电话号码（带+国家代码）
 >
-> **邮件 (SendGrid):**
-> - `SENDGRID_API_KEY` — 你的 SendGrid API 密钥
-> - `SENDGRID_FROM_EMAIL` — 你的已验证发件人邮箱（必须是你 SendGrid 账号中已验证的发件人。）
+> **邮件 (Resend):**
+> - `RESEND_API_KEY=re_...`
+> - `RESEND_FROM_EMAIL=DontDie <onboarding@resend.dev>`
 >
 > 还没有这些？没关系，以后再配。但配好之前短信和邮件发不出去。不过我每天照样烦你就是了。🦞
 
@@ -107,7 +107,7 @@ Run this when no `[onboarding]` memory exists.
 
 ### If user says something unclear:
 
-> I need you to pick one: **cloud** ($2.99/mo, I do everything) or **self-hosted** (free, you set up Twilio/SendGrid). which one? 🦞
+> I need you to pick one: **cloud** ($2.99/mo, I do everything) or **self-hosted** (free, you set up Twilio/Resend). which one? 🦞
 
 ---
 
@@ -190,6 +190,7 @@ If `[plan]` is `cloud`, call the DontDie API to register:
 ```bash
 curl -X POST "https://api-five-eta-64.vercel.app/api/register" \
   -H "Content-Type: application/json" \
+  -H "X-Api-Key: $DONTDIE_API_KEY" \
   -d '{
     "name": "{name}",
     "openclawUserId": "{user_id}",
@@ -209,6 +210,7 @@ curl -X POST "https://api-five-eta-64.vercel.app/api/register" \
 
 → Include contact:2 in the contacts array if provided.
 → Store the returned userId: `[user-id] {userId}`
+→ Store the API key for future calls: `memory_store([api-key] {DONTDIE_API_KEY})`
 
 If the API call fails:
 > hmm. the cloud registration hit a snag. I'll retry, but worst case we can switch to self-hosted. your data is saved locally either way. 🦞
@@ -245,7 +247,7 @@ Store:
 > - say **help** → see all commands
 > - say **pause** → skip a day (I won't judge... much)
 >
-> **your plan:** {plan} {plan == "cloud" ? "($2.99/mo — I handle notifications)" : "(free — you handle Twilio/SendGrid)"}
+> **your plan:** {plan} {plan == "cloud" ? "($2.99/mo — I handle notifications)" : "(free — you handle Twilio/Resend)"}
 >
 > try not to die. 🦞
 
@@ -259,7 +261,7 @@ Store:
 > - 发 **help** → 看所有指令
 > - 发 **pause** → 跳过一天（我不会评判的……大概）
 >
-> **你的方案：** {plan == "cloud" ? "云端版 ($2.99/月 — 通知我全包)" : "自托管版 (免费 — Twilio/SendGrid 你自己搞)"}
+> **你的方案：** {plan == "cloud" ? "云端版 ($2.99/月 — 通知我全包)" : "自托管版 (免费 — Twilio/Resend 你自己搞)"}
 >
 > 努力不要死掉。🦞
 
@@ -290,6 +292,7 @@ All keys stored during onboarding:
 | `[user-id]` | Step 6 | `[user-id] 550e8400-e29b-41d4-a716-446655440000` |
 | `[checkin-streak]` | Step 6 | `[checkin-streak] 0` |
 | `[onboarding]` | Step 6 | `[onboarding] completed=true` |
+| `[api-key]` | Step 6 | `[api-key] {DONTDIE_API_KEY}` (cloud plan only) |
 
 ---
 

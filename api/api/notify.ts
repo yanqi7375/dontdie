@@ -1,5 +1,6 @@
 // Retry logic is handled by the calling agent (OpenClaw skill).
-// This endpoint is idempotent — safe to call multiple times for the same event.
+// Supports idempotency via X-Idempotency-Key header.
+// Without the header, duplicate calls WILL send duplicate notifications.
 
 // TODO: Add rate limiting via Vercel KV or Upstash Redis
 // For now, Twilio/SendGrid have their own built-in rate limits
@@ -7,7 +8,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { neon } from "@neondatabase/serverless";
 import twilio from "twilio";
-import sgMail from "@sendgrid/mail";
+import { Resend } from "resend";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
@@ -17,6 +18,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const apiKey = req.headers["x-api-key"] || req.headers.authorization?.replace("Bearer ", "");
   if (process.env.DONTDIE_API_KEY && apiKey !== process.env.DONTDIE_API_KEY) {
     return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  // Idempotency: prevent duplicate notifications
+  const idempotencyKey = req.headers["x-idempotency-key"] as string;
+  if (idempotencyKey) {
+    try {
+      const sql = neon(process.env.NEON_DATABASE_URL!);
+      const [existing] = await sql(
+        `SELECT id FROM events WHERE details->>'idempotencyKey' = $1 LIMIT 1`,
+        [idempotencyKey]
+      );
+      if (existing) {
+        return res.status(200).json({ success: true, deduplicated: true, message: "Already processed" });
+      }
+    } catch (_) {
+      // If dedup check fails, proceed anyway — better to double-notify than not notify
+    }
   }
 
   const { userId, type, userName, contacts, location, medical, symptoms, message } = req.body;
@@ -246,15 +264,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  // Send email via SendGrid
-  if (process.env.SENDGRID_API_KEY) {
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  // Send email via Resend
+  if (process.env.RESEND_API_KEY) {
+    const resend = new Resend(process.env.RESEND_API_KEY);
     for (const contact of contacts) {
       if (contact.email) {
         try {
-          await sgMail.send({
+          await resend.emails.send({
+            from: process.env.RESEND_FROM_EMAIL || "DontDie <onboarding@resend.dev>",
             to: contact.email,
-            from: { email: process.env.SENDGRID_FROM_EMAIL || "alerts@dontdie.app", name: "DontDie 🦞" },
             subject: emailSubject,
             text: emailBody,
           });
@@ -272,7 +290,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const sql = neon(process.env.NEON_DATABASE_URL!);
     await sql(
       `INSERT INTO events (user_id, type, details) VALUES ($1, $2, $3)`,
-      [userId, type, JSON.stringify({ contacts: contacts.map((c: any) => c.name), sms: results.sms.length, email: results.email.length, errors: results.errors })]
+      [userId, type, JSON.stringify({ idempotencyKey, contacts: contacts.map((c: any) => c.name), sms: results.sms.length, email: results.email.length, errors: results.errors })]
     );
   } catch (_) {
     // Don't fail the notification if logging fails
@@ -311,10 +329,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
+  const totalSent = results.sms.length + results.email.length;
+  const totalContacts = contacts.length;
+
+  if (totalSent === 0 && results.errors.length > 0) {
+    // Nothing was delivered — this is a FAILURE for a safety product
+    return res.status(502).json({
+      success: false,
+      error: "Failed to deliver any notifications",
+      sms: `${results.sms.length}/${totalContacts} sent`,
+      email: `${results.email.length}/${totalContacts} sent`,
+      errors: results.errors,
+    });
+  }
+
   return res.status(200).json({
-    success: true,
+    success: totalSent > 0,
     sms: `${results.sms.length} sent`,
     email: `${results.email.length} sent`,
+    warnings: totalSent < totalContacts ? `${totalContacts - totalSent} contacts not reached` : undefined,
     errors: results.errors.length ? results.errors : undefined,
   });
 }

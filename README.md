@@ -51,14 +51,14 @@ You  <-->  OpenClaw Skill  <-->  Redis Memory (state + timers)
          Civic MCP Gateway        Vercel API (cron)
                 |                        |
                 v                        v
-        Identity verification     Twilio SMS + SendGrid Email
+        Identity verification     Twilio SMS + Resend Email
 ```
 
 1. **OpenClaw Skill** handles conversation and commands
 2. **Redis Memory Plugin** tracks check-in state and 24h escalation timers
 3. **Civic MCP Gateway** verifies identity for emergency contact management
 4. **Vercel API** runs the cron job that fires escalation alerts
-5. **Twilio + SendGrid** deliver the actual SMS and email notifications
+5. **Twilio + Resend** deliver the actual SMS and email notifications
 
 No data leaves the pipeline. Your contacts are encrypted at rest.
 
@@ -100,7 +100,7 @@ You: /dontdie
     What time works?
 You: 8am
 🦞  8am it is. now give me a contact — name, phone, and/or email.
-You: Mom, +1-555-0123, mom@email.com
+You: Mom, +14155551234, mom@email.com
 🦞  got it. Mom will be notified if you miss a check-in for 24h
     or if you send SOS.
 
@@ -146,7 +146,7 @@ SMS to Mom:
    ```bash
    cp api/.env.example api/.env
    ```
-   Fill in your keys: `REDIS_URL`, `TWILIO_SID`, `TWILIO_TOKEN`, `SENDGRID_KEY`, `NEON_DB_URL`
+   Fill in your keys: `NEON_DATABASE_URL`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `CIVIC_URL`, `CIVIC_TOKEN`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
 
 4. **Deploy:**
    ```bash
@@ -159,19 +159,19 @@ SMS to Mom:
    ```
    Or manually copy `skill/` to `~/.openclaw/workspace/skills/dontdie/`.
 
-Requires: Node 20+, a Redis instance, Twilio account, SendGrid account, and a Neon database.
+Requires: Node 20+, an Upstash Redis instance, Twilio account, Resend account, Civic account, and a Neon database.
 
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
 | Skill Runtime | [OpenClaw](https://openclaw.com) |
-| State & Timers | [Redis](https://redis.io) Memory Plugin |
+| State & Timers | [Upstash Redis](https://upstash.com) Memory Plugin |
 | Identity | [Civic](https://civic.com) MCP Gateway |
 | API & Cron | [Vercel](https://vercel.com) |
 | Database | [Neon](https://neon.tech) Postgres |
 | SMS | [Twilio](https://twilio.com) |
-| Email | [SendGrid](https://sendgrid.com) |
+| Email | [Resend](https://resend.com) |
 
 ## Sponsors
 

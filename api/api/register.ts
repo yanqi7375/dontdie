@@ -47,6 +47,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       [name, openclawUserId, language || "en", checkinTime || "09:00", timezone || "America/New_York"]
     );
 
+    // Delete existing contacts before inserting new ones (handles re-registration)
+    await sql(`DELETE FROM contacts WHERE user_id = $1`, [user.id]);
+
     for (const contact of contacts) {
       await sql(
         `INSERT INTO contacts (user_id, name, phone, email)
