@@ -6,8 +6,13 @@ metadata:
   openclaw:
     requires:
       env:
-        - CIVIC_NEXUS_TOKEN
-    primaryEnv: CIVIC_NEXUS_TOKEN
+        - TWILIO_ACCOUNT_SID
+        - TWILIO_AUTH_TOKEN
+        - TWILIO_PHONE_NUMBER
+        - MATON_API_KEY
+      anyEnv:
+        - CIVIC_TOKEN
+    primaryEnv: TWILIO_ACCOUNT_SID
     emoji: "🛟"
     homepage: https://github.com/dontdie-app/dontdie-skill
 ---
@@ -268,19 +273,61 @@ When a user requests account deletion:
 
 ## Notification Channels
 
-### Primary: WhatsApp (via Twilio WhatsApp API through Civic MCP)
-- Daily check-in messages sent via WhatsApp
-- User replies received via WhatsApp
+### How to Send SMS (via Twilio skill — direct API)
+
+Use `curl` to call Twilio REST API. Credentials are in env vars `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER`.
+
+```bash
+curl -X POST "https://api.twilio.com/2010-04-01/Accounts/$TWILIO_ACCOUNT_SID/Messages.json" \
+  -u "$TWILIO_ACCOUNT_SID:$TWILIO_AUTH_TOKEN" \
+  -d "From=$TWILIO_PHONE_NUMBER" \
+  -d "To={contact_phone}" \
+  -d "Body={message_text}"
+```
+
+For WhatsApp, prefix the From/To numbers with `whatsapp:`:
+```bash
+-d "From=whatsapp:$TWILIO_PHONE_NUMBER" \
+-d "To=whatsapp:{contact_phone}"
+```
+
+Refer to `twilio` skill references for full API details.
+
+### How to Send Email (via SendGrid skill — Maton gateway)
+
+Use `curl` or `python` to call SendGrid API through the Maton gateway. Credential: `MATON_API_KEY`.
+
+```bash
+curl -X POST "https://gateway.maton.ai/sendgrid/v3/mail/send" \
+  -H "Authorization: Bearer $MATON_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "personalizations": [{"to": [{"email": "{contact_email}"}]}],
+    "from": {"email": "alerts@dontdie.app", "name": "DontDie Safety Alert"},
+    "subject": "{subject}",
+    "content": [{"type": "text/plain", "value": "{body}"}]
+  }'
+```
+
+Refer to `sendgrid` skill for full API details.
+
+### Primary Channel: WhatsApp
+- Daily check-in messages sent via Twilio WhatsApp API
+- User replies received via OpenClaw WhatsApp channel
 
 ### Emergency Notifications to Contacts:
-- **SMS** via Twilio (through Civic MCP) — ensures delivery even without internet
-- **Email** via SendGrid (through Civic MCP) — provides detailed info + map links
+- **SMS** via Twilio API — ensures delivery even without internet
+- **Email** via SendGrid/Maton — provides detailed info + map links
 
-### Civic Nexus Guardrails
-- Twilio SMS/WhatsApp: can ONLY send to phone numbers stored in user's `[contact:N]` entries
-- SendGrid: can ONLY send to email addresses stored in user's `[contact:N]` entries
-- Rate limit: max 10 messages per hour per user
-- All API calls are audited with full logs (tool name, parameters, response, timestamp)
+### Safety Rules
+- Only send to phone numbers and emails stored in user's `[contact:N]` entries
+- Self-enforce rate limit: max 10 messages per hour per user
+- Log every notification in memory as `[sos-event]` or `[escalation-event]`
+
+### Civic MCP Gateway
+- Civic provides audit logging for all MCP tool calls
+- Civic token available via `CIVIC_URL` + `CIVIC_TOKEN` env vars
+- Use Civic for additional App integrations as needed (Stripe, etc.)
 
 ---
 
