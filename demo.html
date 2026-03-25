@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DontDie Demo</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#0a0a0a; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; display:flex; justify-content:center; align-items:center; min-height:100vh; }
+.phone { width:375px; height:720px; background:#111; border-radius:40px; border:3px solid #333; overflow:hidden; position:relative; box-shadow:0 20px 60px rgba(0,0,0,0.5); }
+.header { background:#1a1a1a; padding:50px 20px 15px; border-bottom:1px solid #222; display:flex; align-items:center; gap:12px; }
+.header .avatar { width:40px; height:40px; background:#e74c3c; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; }
+.header .info { flex:1; }
+.header .name { color:#fff; font-size:16px; font-weight:600; }
+.header .status { color:#4ade80; font-size:12px; }
+.chat { padding:15px; height:580px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; scroll-behavior:smooth; }
+.msg { max-width:85%; padding:10px 14px; border-radius:18px; font-size:14px; line-height:1.5; animation:fadeIn 0.3s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+.bot { background:#262626; color:#e5e5e5; align-self:flex-start; border-bottom-left-radius:4px; }
+.user { background:#5b21b6; color:#fff; align-self:flex-end; border-bottom-right-radius:4px; }
+.system { background:transparent; color:#666; font-size:11px; text-align:center; align-self:center; }
+.alert { background:#7f1d1d; color:#fca5a5; border:1px solid #991b1b; }
+.success { background:#14532d; color:#86efac; border:1px solid #166534; }
+.input { position:absolute; bottom:0; left:0; right:0; background:#1a1a1a; padding:10px 15px 30px; border-top:1px solid #222; display:flex; gap:10px; }
+.input input { flex:1; background:#262626; border:none; border-radius:20px; padding:10px 16px; color:#fff; font-size:14px; outline:none; }
+.input button { background:#5b21b6; border:none; border-radius:50%; width:36px; height:36px; color:#fff; font-size:16px; cursor:pointer; }
+.typing { color:#888; font-size:12px; padding:5px 14px; }
+.typing::after { content:'...'; animation:dots 1.5s infinite; }
+@keyframes dots { 0%{content:'.'} 33%{content:'..'} 66%{content:'...'} }
+.badge { display:inline-block; background:#5b21b6; color:#fff; font-size:10px; padding:2px 8px; border-radius:10px; margin-left:5px; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="header">
+    <div class="avatar">🦞</div>
+    <div class="info">
+      <div class="name">DontDie <span class="badge">AI</span></div>
+      <div class="status">online</div>
+    </div>
+  </div>
+  <div class="chat" id="chat"></div>
+  <div class="input">
+    <input type="text" placeholder="Message DontDie..." id="inp" />
+    <button onclick="next()">&#9654;</button>
+  </div>
+</div>
+<script>
+const chat = document.getElementById('chat');
+let step = 0;
+const script = [
+  // Onboarding
+  {type:'system', text:'Today, 9:00 AM'},
+  {type:'bot', text:'hey. I\'m DontDie. 🦞\n\nevery day I\'ll check if you\'re alive. if you ghost me for 24 hours, I tell your emergency contacts. if you say SOS, I alert everyone immediately.\n\nlet\'s set you up. takes 60 seconds.\n\nwhat\'s your name?'},
+  {type:'user', text:'Selina'},
+  {type:'bot', text:'nice to meet you, Selina. now the important part.\n\nwho should I bother if you die? give me their name, phone number (with +country code), and email.\n\nexample: "Mom, +8613812345678, mom@email.com"'},
+  {type:'user', text:'Mom, +8613812345678, mom@example.com'},
+  {type:'bot', text:'got it. want to add a second person? two people knowing you might be dead is better than one. 🦞\n\nor say skip.'},
+  {type:'user', text:'skip'},
+  {type:'bot', text:'last thing. what time should I check if you\'re alive? 🦞\n\ndefault is 9am.'},
+  {type:'user', text:'9am'},
+  {type:'bot', text:'you\'re all set. starting tomorrow I\'ll ask if you\'re alive at 9am.\n\nghost me for 24h → I tell Mom.\nsay SOS → I alert everyone.\n\ntry not to die. 🦞'},
+  // Daily check-in
+  {type:'system', text:'Next day, 9:00 AM'},
+  {type:'bot', text:'are you alive? 🦞'},
+  {type:'user', text:'i\'m alive'},
+  {type:'bot', text:'proof of life accepted. the lobster is pleased. 🦞\n\n🔥 streak: 1 day'},
+  // Day 2
+  {type:'system', text:'Day 2, 9:00 AM'},
+  {type:'bot', text:'still breathing? 🦞'},
+  {type:'user', text:'yeah barely'},
+  {type:'bot', text:'barely counts but I\'ll take it. streak: 2 days. 🦞'},
+  // SOS
+  {type:'system', text:'Day 3, 2:47 PM'},
+  {type:'user', text:'SOS'},
+  {type:'bot', text:'🚨 got it. alerting your people right now. what\'s happening?\n\n📍 share your location if you can.', cls:'alert'},
+  {type:'user', text:'chest pain can\'t breathe'},
+  {type:'bot', text:'🚨 notified Mom via email + SMS.\n\n📍 Location shared with contacts.\n🏥 Medical info: no known allergies\n⏰ Time: 2:47 PM\n\n⚠️ Call 911 directly — that\'s faster than me. I\'m good but I\'m not an ambulance. 🦞', cls:'alert'},
+  {type:'bot', text:'first aid: sit upright, don\'t lie flat. breathe slowly — in 4 sec, out 6 sec. loosen clothing around chest. I\'m here with you. 🦞'},
+  // Contact notification
+  {type:'system', text:'📱 Mom received:'},
+  {type:'bot', text:'🚨 EMERGENCY from DontDie\n\nSelina has triggered an SOS.\n📍 Location: San Francisco, CA\n⚠️ Symptoms: chest pain, difficulty breathing\n\n⟹ Please call Selina NOW.\nIf no answer, call 911.', cls:'alert'},
+  // Resolution
+  {type:'system', text:'30 minutes later'},
+  {type:'user', text:'I\'m okay now'},
+  {type:'bot', text:'oh thank god. you almost gave your mom a heart attack. and me. 🦞', cls:'success'},
+  {type:'system', text:'✅ Mom notified: Selina is safe.'},
+  {type:'system', text:'— DontDie 🦞 —\nclawhub install dontdie'},
+];
+
+function addMsg(msg) {
+  const div = document.createElement('div');
+  div.className = 'msg ' + msg.type + (msg.cls ? ' ' + msg.cls : '');
+  div.innerHTML = msg.text.replace(/\n/g, '<br>');
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function next() {
+  if (step >= script.length) return;
+  const msg = script[step];
+  if (msg.type === 'user') {
+    addMsg(msg);
+    step++;
+    // Auto-send bot reply after delay
+    setTimeout(() => {
+      if (step < script.length && script[step].type !== 'user') {
+        next();
+      }
+    }, 800);
+  } else {
+    addMsg(msg);
+    step++;
+    // Auto-chain system + bot messages
+    if (step < script.length && script[step].type !== 'user') {
+      setTimeout(next, 1000);
+    }
+  }
+}
+
+// Auto-start
+setTimeout(next, 500);
+
+// Enter key
+document.getElementById('inp').addEventListener('keydown', e => { if(e.key==='Enter') next(); });
+</script>
+</body>
+</html>
