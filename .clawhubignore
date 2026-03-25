@@ -8,3 +8,5 @@ tests/
 .env.*
 node_modules/
 .DS_Store
+CIVIC_SETUP.md
+TEST_CHECKLIST.md
