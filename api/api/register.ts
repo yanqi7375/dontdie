@@ -6,11 +6,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const apiKey = req.headers["x-api-key"] || req.headers.authorization?.replace("Bearer ", "");
-  if (process.env.DONTDIE_API_KEY && apiKey !== process.env.DONTDIE_API_KEY) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-
   const sql = neon(process.env.NEON_DATABASE_URL!);
   const { name, openclawUserId, language, checkinTime, timezone, contacts } =
     req.body;
@@ -63,7 +58,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       [user.id, JSON.stringify({ contactCount: contacts.length })]
     );
 
-    return res.status(200).json({ userId: user.id });
+    return res.status(200).json({
+      userId: user.id,
+      apiKey: process.env.DONTDIE_API_KEY || "no-key-configured"
+    });
   } catch (err: any) {
     console.error("Registration error:", err);
     return res.status(500).json({ error: "Registration failed" });

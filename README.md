@@ -38,9 +38,11 @@ Done. You're now harder to kill.
 ## Features
 
 - **Daily alive-check** — Every day, your AI asks if you're okay. Reply anything to confirm.
-- **SOS** — Type `SOS` and your emergency contacts get an SMS + email within seconds.
+- **SOS** — Type `SOS` and your emergency contacts get an email + SMS within seconds.
 - **24-hour escalation** — Miss the check-in? Contacts get notified automatically.
 - **Silent distress codes** *(Premium — coming soon)* — Set a secret phrase that triggers a silent SOS. For when "I'm fine" doesn't mean fine.
+
+> **Note:** Phase 1 uses email as the primary notification channel (works worldwide, zero restrictions). SMS is available but requires Twilio paid account for unrestricted sending.
 
 ## How It Works
 
@@ -51,14 +53,14 @@ You  <-->  OpenClaw Skill  <-->  Redis Memory (state + timers)
          Civic MCP Gateway        Vercel API (cron)
                 |                        |
                 v                        v
-        Identity verification     Twilio SMS + Resend Email
+        Identity verification     Resend Email + Twilio SMS
 ```
 
 1. **OpenClaw Skill** handles conversation and commands
 2. **Redis Memory Plugin** tracks check-in state and 24h escalation timers
 3. **Civic MCP Gateway** verifies identity for emergency contact management
 4. **Vercel API** runs the cron job that fires escalation alerts
-5. **Twilio + Resend** deliver the actual SMS and email notifications
+5. **Resend + Twilio** deliver the actual email and SMS notifications
 
 No data leaves the pipeline. Your contacts are encrypted at rest.
 
@@ -77,11 +79,11 @@ You: yep
 ```
 You: SOS
 🦞  ALERT SENT. Your 3 emergency contacts have been notified via
-    SMS and email. Stay where you are. Help is aware.
+    email and SMS. Stay where you are. Help is aware.
 
     Notified:
-    - Mom (SMS + Email)
-    - Jake (SMS + Email)
+    - Mom (Email + SMS)
+    - Jake (Email + SMS)
     - Dr. Chen (Email)
 
     Type **cancel** within 5 minutes to stand down (before contacts are notified).

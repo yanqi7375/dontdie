@@ -86,6 +86,34 @@ Run this when no `[onboarding]` memory exists.
 > - `RESEND_FROM_EMAIL=DontDie <onboarding@resend.dev>`
 >
 > don't have these yet? no worries — set them up later. but SMS and email won't fire until you do. I'll still nag you every day either way. 🦞
+>
+> ### Self-Hosted Setup Guide
+>
+> If you chose self-hosted, here's how to set up each service:
+>
+> **Twilio (SMS) — 5 minutes:**
+> 1. Go to https://twilio.com and sign up (free trial gives you $15)
+> 2. In the Twilio Console, copy your **Account SID** and **Auth Token** from the dashboard
+> 3. Go to Phone Numbers → Buy a Number → pick any US number with SMS capability ($1.15/mo)
+> 4. Add these to your OpenClaw environment (~/.openclaw/workspace/.env):
+>    ```
+>    TWILIO_ACCOUNT_SID=AC... (from dashboard)
+>    TWILIO_AUTH_TOKEN=... (from dashboard)
+>    TWILIO_PHONE_NUMBER=+1... (the number you bought)
+>    ```
+> 5. ⚠️ Trial accounts can only send to verified numbers. Go to Phone Numbers → Verified Caller IDs → add your emergency contacts' numbers.
+>
+> **Resend (Email) — 2 minutes:**
+> 1. Go to https://resend.com and sign up with Google/GitHub
+> 2. Copy your API key from the dashboard
+> 3. Add to your .env:
+>    ```
+>    RESEND_API_KEY=re_...
+>    RESEND_FROM_EMAIL=DontDie <onboarding@resend.dev>
+>    ```
+> 4. Free tier: 100 emails/day, 3000/month. More than enough.
+>
+> **That's it!** Say "done" when you've set up both, and I'll verify the connection.
 
 **Chinese:**
 > 尊重。DIY 生存模式启动。🦞
@@ -102,6 +130,34 @@ Run this when no `[onboarding]` memory exists.
 > - `RESEND_FROM_EMAIL=DontDie <onboarding@resend.dev>`
 >
 > 还没有这些？没关系，以后再配。但配好之前短信和邮件发不出去。不过我每天照样烦你就是了。🦞
+>
+> ### 自托管设置指南
+>
+> 选了自托管？按下面步骤配置每个服务：
+>
+> **Twilio（短信）— 5 分钟：**
+> 1. 去 https://twilio.com 注册（免费试用送你 $15）
+> 2. 在 Twilio 控制台首页复制你的 **Account SID** 和 **Auth Token**
+> 3. 进入 Phone Numbers → Buy a Number → 选一个支持 SMS 的美国号码（$1.15/月）
+> 4. 把这些加到你的 OpenClaw 环境变量（~/.openclaw/workspace/.env）：
+>    ```
+>    TWILIO_ACCOUNT_SID=AC...（从控制台复制）
+>    TWILIO_AUTH_TOKEN=...（从控制台复制）
+>    TWILIO_PHONE_NUMBER=+1...（你买的号码）
+>    ```
+> 5. ⚠️ 试用账号只能发给验证过的号码。去 Phone Numbers → Verified Caller IDs → 把你紧急联系人的号码加上。
+>
+> **Resend（邮件）— 2 分钟：**
+> 1. 去 https://resend.com 用 Google/GitHub 注册
+> 2. 从控制台复制你的 API key
+> 3. 加到你的 .env：
+>    ```
+>    RESEND_API_KEY=re_...
+>    RESEND_FROM_EMAIL=DontDie <onboarding@resend.dev>
+>    ```
+> 4. 免费额度：100 封/天，3000 封/月。完全够用。
+>
+> **搞定了！** 两个都配好了就说"done"，我来验证连接。
 
 → Continue to Step 3.
 

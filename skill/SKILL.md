@@ -243,13 +243,21 @@ When the 48h escalation cron fires:
 
 ## Notification Dispatch
 
+### Notification Priority
+Phase 1: **Email-first strategy.** Resend email works for any address worldwide with zero restrictions. SMS via Twilio requires paid account for unrestricted sending.
+
+When notifying contacts:
+1. ALWAYS send email first (via Resend) — this is reliable and unrestricted
+2. ALSO try SMS if Twilio is configured — may fail on trial accounts
+3. If email succeeds but SMS fails, still report success (email is the primary channel)
+
 All notifications (SOS, escalation, resolved) are routed through this logic. Check `memory_recall` → `[plan]` to determine the delivery path. **Default is `cloud` if `[plan]` is not set.**
 
 ### Cloud Plan (`[plan] cloud` or unset)
 
-Send an HTTP POST to the DontDie API. This is the zero-config default — no env vars needed.
+Send an HTTP POST to the DontDie API. Cloud plan is zero-config for the USER. The API key is automatically received during registration and stored in memory.
 
-The DontDie API requires authentication via `X-Api-Key` header. Cloud plan users receive their API key automatically during registration.
+The DontDie API requires authentication via `X-Api-Key` header. During registration, the /api/register endpoint returns an API key. Store it: memory_store([api-key] {returned_apiKey}). Use this key in all subsequent /api/notify calls via X-Api-Key header.
 
 ```bash
 curl -X POST "${DONTDIE_API_URL:-https://api-five-eta-64.vercel.app}/api/notify" \
@@ -267,7 +275,7 @@ curl -X POST "${DONTDIE_API_URL:-https://api-five-eta-64.vercel.app}/api/notify"
   }'
 ```
 
-The cloud API handles SMS (Twilio) and email (SendGrid) delivery on our side. Nothing to configure.
+The cloud API handles SMS (Twilio) and email (Resend) delivery on our side. Nothing to configure.
 
 ### Self-Hosted Plan (`[plan] self-hosted`)
 
