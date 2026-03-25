@@ -349,6 +349,9 @@ When making HTTP calls to the DontDie API:
 - **Kill switch**: If DontDie misbehaves, delete the Civic toolkit to revoke all API access instantly
 - **Evidence chain**: Legal compliance — who triggered what, when, to whom
 
+### Server-Side Audit Logging
+The DontDie API server also sends audit events to Civic after every notification. This means even if the agent doesn't route through Civic, the server-side notifications are still audited.
+
 ---
 
 ## Disclaimer

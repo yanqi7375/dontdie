@@ -278,6 +278,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Don't fail the notification if logging fails
   }
 
+  // Log to Civic audit trail
+  if (process.env.CIVIC_URL && process.env.CIVIC_TOKEN) {
+    try {
+      await fetch(process.env.CIVIC_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.CIVIC_TOKEN}`,
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          method: "tools/call",
+          params: {
+            name: "audit_log",
+            arguments: {
+              action: `dontdie_${type}`,
+              userId,
+              userName,
+              contactsNotified: contacts.map((c: any) => c.name),
+              smsCount: results.sms.length,
+              emailCount: results.email.length,
+              timestamp: new Date().toISOString(),
+              errors: results.errors,
+            }
+          },
+          id: Date.now(),
+        }),
+      });
+    } catch (_) {
+      // Civic logging is best-effort, don't fail notifications
+    }
+  }
+
   return res.status(200).json({
     success: true,
     sms: `${results.sms.length} sent`,
