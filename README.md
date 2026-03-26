@@ -119,19 +119,19 @@ SMS to Mom:
 
 ## Plans
 
-| | **Free** | **Cloud — $3/mo** |
-|---|---|---|
-| Daily alive-check | Yes | Yes |
-| SOS alerts | Yes | Yes |
-| 24h escalation | Yes | Yes |
-| Emergency contacts | 2 | 10 |
-| Check-in channels | Chat only | Chat, SMS, WhatsApp |
-| Silent distress codes | — | Yes |
-| Custom check-in schedule | — | Yes |
-| Check-in history & trends | — | Yes |
-| Self-hostable | Yes | — |
+| Feature | Free | Cloud ($2.90/quarter) |
+|---------|------|----------------------|
+| Daily alive-check | ✅ | ✅ |
+| Streak tracking | ✅ | ✅ |
+| SOS detection | ✅ | ✅ |
+| Emergency notifications | ❌ (bring your own API) | ✅ 3-day free trial |
+| Email alerts to contacts | ❌ | ✅ |
+| SMS alerts to contacts | ❌ | ✅ |
+| Self-hosted option | ✅ forever free | — |
 
 ## Self-Hosting
+
+**Free forever.** Bring your own Twilio (SMS) and Resend (email) API keys to power notifications yourself.
 
 1. **Clone the repo:**
    ```bash
@@ -161,7 +161,7 @@ SMS to Mom:
    ```
    Or manually copy `skill/` to `~/.openclaw/workspace/skills/dontdie/`.
 
-Requires: Node 20+, an Upstash Redis instance, Twilio account, Resend account, Civic account, and a Neon database.
+Requires: Node 20+, an Upstash Redis instance, your own Twilio account (SMS), your own Resend account (email), Civic account, and a Neon database.
 
 ## Tech Stack
 
@@ -174,6 +174,16 @@ Requires: Node 20+, an Upstash Redis instance, Twilio account, Resend account, C
 | Database | [Neon](https://neon.tech) Postgres |
 | SMS | [Twilio](https://twilio.com) |
 | Email | [Resend](https://resend.com) |
+
+### Security
+
+- All API endpoints require authentication
+- Contacts fetched from database, never from request body
+- Rate limiting: max 10 notifications per user per hour
+- Input validation and sanitization on all fields
+- Payment-gated notifications prevent abuse
+- Civic MCP audit trail on every API call
+- Per-user data isolation
 
 ## Sponsors
 

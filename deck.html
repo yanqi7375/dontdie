@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DontDie 🦞 Pitch Deck</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;900&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--red:#DC2626;--dark-red:#991B1B;--purple:#7C3AED;--orange:#F97316;--green:#22C55E;--bg:#050505;--card:#111;--gray:#6B7280;--light:#E5E7EB}
+body{background:var(--bg);color:#fff;font-family:'Inter',sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+
+/* Slide system */
+.deck{width:100vw;height:100vh;position:relative}
+.slide{width:100vw;height:100vh;display:none;flex-direction:column;justify-content:center;padding:7vw 8vw;position:absolute;top:0;left:0}
+.slide.active{display:flex;animation:slideIn .5s cubic-bezier(.22,1,.36,1)}
+@keyframes slideIn{from{opacity:0;transform:scale(.97) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes typewriter{from{width:0}to{width:100%}}
+@keyframes blink{50%{border-color:transparent}}
+@keyframes countUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes glow{0%,100%{box-shadow:0 0 20px rgba(220,38,38,.3)}50%{box-shadow:0 0 40px rgba(220,38,38,.6)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+.stagger>*{opacity:0;animation:fadeUp .6s ease forwards}
+.active .stagger>*:nth-child(1){animation-delay:.1s}
+.active .stagger>*:nth-child(2){animation-delay:.25s}
+.active .stagger>*:nth-child(3){animation-delay:.4s}
+.active .stagger>*:nth-child(4){animation-delay:.55s}
+.active .stagger>*:nth-child(5){animation-delay:.7s}
+.active .stagger>*:nth-child(6){animation-delay:.85s}
+
+/* Nav */
+.nav{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:100;display:flex;gap:8px;align-items:center;background:rgba(20,20,20,.8);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.08);padding:6px 16px;border-radius:40px}
+.nav button{background:transparent;border:none;color:#666;width:36px;height:36px;border-radius:50%;font-size:14px;cursor:pointer;transition:all .2s}
+.nav button:hover{background:rgba(255,255,255,.1);color:#fff}
+.counter{color:#555;font-size:12px;font-family:'Inter';font-weight:600;letter-spacing:1px;min-width:50px;text-align:center}
+.progress{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--red),var(--purple),var(--orange));transition:width .4s ease;z-index:100}
+
+/* Dots */
+.dots{display:flex;gap:6px;margin:0 8px}
+.dot{width:6px;height:6px;border-radius:50%;background:#333;transition:all .3s;cursor:pointer}
+.dot.active{background:var(--red);width:20px;border-radius:3px}
+
+/* Typography */
+h1{font-family:'Inter';font-size:clamp(40px,7vw,80px);font-weight:900;line-height:1.05;letter-spacing:-2px}
+h2{font-family:'Inter';font-size:clamp(26px,3.5vw,44px);font-weight:900;line-height:1.15;letter-spacing:-1px}
+h3{font-size:clamp(16px,1.8vw,22px);font-weight:700}
+p{font-size:clamp(14px,1.2vw,18px);color:var(--gray);line-height:1.7}
+.label{font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;padding:6px 14px;border-radius:20px;display:inline-block;margin-bottom:16px}
+.label.red{background:rgba(220,38,38,.12);color:var(--red)}
+.label.purple{background:rgba(124,58,237,.12);color:var(--purple)}
+.label.green{background:rgba(34,197,94,.12);color:var(--green)}
+.label.orange{background:rgba(249,115,22,.12);color:var(--orange)}
+.serif{font-family:'Playfair Display',Georgia,serif}
+.big-num{font-size:clamp(56px,10vw,120px);font-weight:900;line-height:1;letter-spacing:-4px;background:linear-gradient(135deg,#fff 30%,var(--red));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.quote{font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:clamp(18px,2vw,26px);color:#D1D5DB;border-left:3px solid var(--red);padding-left:20px;margin:24px 0;line-height:1.5}
+
+/* Cards */
+.cards{display:flex;gap:16px;flex-wrap:wrap}
+.card{background:var(--card);border-radius:16px;padding:28px;flex:1;min-width:180px;border:1px solid rgba(255,255,255,.05);transition:transform .3s,border-color .3s}
+.card:hover{transform:translateY(-4px);border-color:rgba(255,255,255,.12)}
+.card-icon{font-size:28px;margin-bottom:12px}
+.card h3{margin-bottom:6px;font-size:16px}
+.card p{font-size:13px;color:#555;line-height:1.6}
+
+/* Chat mockup */
+.phone{background:#0A0A0A;border-radius:24px;padding:16px;max-width:380px;border:1px solid #222;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.phone-header{display:flex;align-items:center;gap:10px;padding:8px 8px 16px;border-bottom:1px solid #1A1A1A;margin-bottom:16px}
+.phone-avatar{width:32px;height:32px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;font-size:14px}
+.phone-name{font-size:13px;font-weight:600;color:#ccc}
+.phone-status{font-size:10px;color:var(--green)}
+.chat-messages{display:flex;flex-direction:column;gap:10px}
+.chat-row{display:flex}
+.chat-row.right{justify-content:flex-end}
+.bubble{padding:10px 14px;border-radius:16px;font-size:14px;max-width:82%;line-height:1.45}
+.bubble.bot{background:#1A1A1A;color:#D1D5DB;border-bottom-left-radius:4px}
+.bubble.user{background:var(--purple);color:#fff;border-bottom-right-radius:4px}
+.bubble.alert{background:rgba(220,38,38,.15);color:#FCA5A5;border:1px solid rgba(220,38,38,.3);border-bottom-left-radius:4px}
+.bubble.ok{background:rgba(34,197,94,.1);color:#86EFAC;border:1px solid rgba(34,197,94,.2);border-bottom-left-radius:4px}
+.time{font-size:9px;color:#444;text-align:center;margin:4px 0}
+
+/* Split layout */
+.split{display:flex;gap:40px;align-items:center;flex-wrap:wrap}
+.split>div{flex:1;min-width:280px}
+
+/* Notification card */
+.notif{background:linear-gradient(135deg,#1C0000,#2A0000);border-radius:16px;padding:28px;border:1px solid rgba(220,38,38,.25);animation:glow 3s ease-in-out infinite}
+.notif h3{color:#FCA5A5;font-size:16px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.notif p{color:#D1D5DB;font-size:13px;line-height:1.8}
+.notif .field{display:flex;gap:8px;margin:4px 0}
+.notif .field-icon{flex-shrink:0}
+.notif .action{margin-top:16px;background:var(--red);color:#fff;padding:10px 20px;border-radius:8px;display:inline-block;font-weight:700;font-size:13px}
+
+/* Escalation */
+.esc-row{display:flex;gap:24px;margin-top:24px}
+.esc{flex:1;border-radius:16px;padding:28px;border:1px solid rgba(255,255,255,.05)}
+.esc.gentle{background:#111;border-left:4px solid var(--orange)}
+.esc.urgent{background:linear-gradient(135deg,#1C0000,#0A0A0A);border-left:4px solid var(--red)}
+.esc-time{font-size:48px;font-weight:900;letter-spacing:-2px}
+.esc p.msg{font-family:'Playfair Display';font-style:italic;font-size:15px;color:#aaa;margin-top:12px;line-height:1.5}
+
+/* Steps */
+.flow{display:flex;gap:0;margin-top:32px;align-items:flex-start}
+.flow-step{flex:1;text-align:center;position:relative}
+.flow-step::after{content:'';position:absolute;top:24px;right:-50%;width:100%;height:2px;background:linear-gradient(90deg,var(--purple),transparent);z-index:0}
+.flow-step:last-child::after{display:none}
+.flow-icon{width:48px;height:48px;border-radius:12px;background:var(--purple);display:inline-flex;align-items:center;justify-content:center;font-size:20px;position:relative;z-index:1;margin-bottom:12px}
+.flow-step h3{font-size:14px;margin-bottom:4px}
+.flow-step p{font-size:12px;color:#555}
+
+/* Lobster float */
+.lobster{font-size:80px;animation:float 3s ease-in-out infinite;display:inline-block}
+
+/* CTA */
+.cta-slide{background:linear-gradient(135deg,var(--red) 0%,#7F1D1D 50%,#450a0a 100%)}
+.cmd{font-family:'SF Mono',Consolas,monospace;font-size:clamp(16px,2.2vw,28px);background:rgba(0,0,0,.35);padding:10px 24px;border-radius:10px;display:inline-block;border:1px solid rgba(255,255,255,.15);backdrop-filter:blur(4px)}
+
+/* Responsive */
+@media(max-width:768px){
+  .cards,.split,.esc-row,.flow{flex-direction:column}
+  .slide{padding:6vw}
+  .flow-step::after{display:none}
+}
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+<!-- ═══════ SLIDE 1: TITLE ═══════ -->
+<div class="slide active">
+  <div class="stagger">
+    <div class="label red">AIGEO HACKATHON 2026</div>
+    <h1 style="margin-top:8px">DontDie <span class="lobster" style="font-size:.5em">🦞</span></h1>
+    <div style="width:60px;height:3px;background:var(--red);margin:20px 0;border-radius:2px"></div>
+    <p style="font-size:clamp(18px,2vw,24px);color:#888;max-width:550px;line-height:1.5">
+      Your AI checks if you're alive. Every day.<br>
+      <span style="color:#ccc">If you don't answer, it tells your people.</span>
+    </p>
+    <p style="margin-top:48px;color:#444;font-size:13px;letter-spacing:1px">
+      SELINA HUANG &nbsp;&middot;&nbsp; MARCH 2026
+    </p>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE 2: THE QUESTION ═══════ -->
+<div class="slide" style="text-align:center;align-items:center">
+  <div class="stagger" style="display:flex;flex-direction:column;align-items:center">
+    <p style="color:#555;font-size:14px;letter-spacing:2px;text-transform:uppercase">THE QUESTION NO ONE WANTS TO ASK</p>
+    <h2 class="serif" style="font-size:clamp(24px,3.5vw,42px);color:#E5E5E5;margin-top:24px;max-width:700px;font-weight:400;line-height:1.4">
+      "If I collapse in my apartment right now&hellip;<br>
+      <span style="color:var(--red);font-weight:700">how long before anyone notices?</span>"
+    </h2>
+    <div style="display:flex;gap:48px;margin-top:48px">
+      <div style="text-align:center">
+        <div style="font-size:48px;font-weight:900;color:var(--red)">92M</div>
+        <p style="font-size:12px;margin-top:4px">China, living alone</p>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:48px;font-weight:900;color:var(--orange)">37M</div>
+        <p style="font-size:12px;margin-top:4px">America, living alone</p>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:48px;font-weight:900;color:var(--purple)">2x</div>
+        <p style="font-size:12px;margin-top:4px">Canada's population</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE 3: SOLUTIONS FAIL ═══════ -->
+<div class="slide">
+  <div class="stagger">
+    <div class="label red">THE GAP</div>
+    <h2>Every solution requires you to be conscious.</h2>
+    <p style="margin:8px 0 24px;color:#666">But emergencies don't wait for you to press a button.</p>
+    <div class="cards">
+      <div class="card">
+        <div class="card-icon">🔔</div>
+        <h3>Life Alert</h3>
+        <p>Built for 80-year-olds. $30/month pendant. No one under 60 will wear it.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📱</div>
+        <h3>Phone SOS</h3>
+        <p>Press side button 5 times. Great — unless you're unconscious on the floor.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">⌚</div>
+        <h3>Smart Watch</h3>
+        <p>$300 hardware. Needs charging. Needs wearing. Falls through the cracks.</p>
+      </div>
+    </div>
+    <p style="margin-top:24px;color:var(--red);font-weight:600;font-size:15px">
+      What if the system checked on YOU — instead of waiting for you to ask for help?
+    </p>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE 4: THE ANSWER ═══════ -->
+<div class="slide cta-slide" style="text-align:center;align-items:center">
+  <div class="stagger" style="display:flex;flex-direction:column;align-items:center">
+    <div class="lobster" style="font-size:64px;margin-bottom:16px">🦞</div>
+    <h1 style="color:#fff;font-size:clamp(44px,8vw,88px)">DontDie</h1>
+    <p style="color:#FEE2E2;font-size:clamp(18px,2.2vw,28px);margin-top:12px;font-weight:300">
+      Every morning, your AI asks one question:
+    </p>
+    <h2 class="serif" style="color:#fff;margin-top:16px;font-size:clamp(28px,4vw,52px);font-weight:400;font-style:italic">
+      "are you alive?"
+    </h2>
+    <div style="margin-top:32px;display:flex;gap:32px;flex-wrap:wrap;justify-content:center">
+      <div style="background:rgba(0,0,0,.25);border-radius:12px;padding:16px 24px;border:1px solid rgba(255,255,255,.1)">
+        <div style="font-size:24px;font-weight:900;color:#fff">24h silence</div>
+        <p style="color:#FCA5A5;font-size:13px;margin-top:4px">→ tells your mom</p>
+      </div>
+      <div style="background:rgba(0,0,0,.25);border-radius:12px;padding:16px 24px;border:1px solid rgba(255,255,255,.1)">
+        <div style="font-size:24px;font-weight:900;color:#fff">Say "SOS"</div>
+        <p style="color:#FCA5A5;font-size:13px;margin-top:4px">→ alerts everyone instantly</p>
+      </div>
+      <div style="background:rgba(0,0,0,.25);border-radius:12px;padding:16px 24px;border:1px solid rgba(255,255,255,.1)">
+        <div style="font-size:24px;font-weight:900;color:#fff">Zero config</div>
+        <p style="color:#FCA5A5;font-size:13px;margin-top:4px">→ 60 seconds to set up</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE 5: HOW IT WORKS ═══════ -->
+<div class="slide">
+  <div class="stagger">
+    <div class="label purple">HOW IT WORKS</div>
+    <h2>One command. 60 seconds. Done.</h2>
+    <div class="flow" style="margin-top:40px">
+      <div class="flow-step">
+        <div class="flow-icon">⚡</div>
+        <h3>Install</h3>
+        <p style="font-family:monospace;color:var(--purple)">clawhub install dontdie</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-icon" style="background:var(--red)">💬</div>
+        <h3>Setup</h3>
+        <p>Type /dontdie<br>Name + 1 contact</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-icon" style="background:var(--orange)">☀️</div>
+        <h3>Daily Check</h3>
+        <p>"are you alive? 🦞"<br>Reply = streak +1</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-icon" style="background:var(--green)">🛡️</div>
+        <h3>Protected</h3>
+        <p>SOS = instant alert<br>Silence = escalation</p>
+      </div>
+    </div>
+    <div style="margin-top:40px;background:var(--card);border-radius:12px;padding:20px 24px;border:1px solid #222;display:inline-block">
+      <p style="color:#888;font-size:14px">Total setup time: <span style="color:#fff;font-weight:900;font-size:20px">60 seconds</span>&emsp;Hardware needed: <span style="color:#fff;font-weight:900;font-size:20px">None</span>&emsp;Monthly cost: <span style="color:var(--green);font-weight:900;font-size:20px">Free</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE 6: TECH STACK ═══════ -->
+<div class="slide">
+  <div class="stagger">
+    <div class="label purple">TECH STACK</div>
+    <h2>Safety at every layer</h2>
+    <p style="margin:4px 0 20px">Entire product = one SKILL.md file. The AI reads it and becomes DontDie.</p>
+    <div class="cards">
+      <div class="card" style="border-top:3px solid var(--purple)">
+        <div class="card-icon">🧠</div>
+        <h3>OpenClaw</h3>
+        <p>AI agent framework. Our entire product is a prompt. One command to install. The AI becomes DontDie.</p>
+      </div>
+      <div class="card" style="border-top:3px solid var(--red)">
+        <div class="card-icon">💾</div>
+        <h3>Redis</h3>
+        <p>Agent memory. Contacts, streaks, medical info. Without it, the AI forgets who you are at every SOS.</p>
+      </div>
+      <div class="card" style="border-top:3px solid var(--orange)">
+        <div class="card-icon">🛡️</div>
+        <h3>Civic MCP</h3>
+        <p>Every API call audited. Kill switch for runaway AI. Because AI + emergencies needs guardrails.</p>
+      </div>
+      <div class="card" style="border-top:3px solid var(--green)">
+        <div class="card-icon">⚡</div>
+        <h3>Neon + Vercel</h3>
+        <p>Serverless notify API. Resend email + Twilio SMS. PostgreSQL. User touches zero infrastructure.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE 7: DEMO — CHECK-IN ═══════ -->
+<div class="slide">
+  <div class="stagger">
+    <div class="label green">LIVE DEMO</div>
+    <h2>The daily alive-check</h2>
+    <div class="split" style="margin-top:20px">
+      <div class="phone">
+        <div class="phone-header">
+          <div class="phone-avatar">🦞</div>
+          <div>
+            <div class="phone-name">DontDie</div>
+            <div class="phone-status">● online</div>
+          </div>
+        </div>
+        <div class="chat-messages">
+          <div class="time">Today 9:00 AM</div>
+          <div class="chat-row"><div class="bubble bot">are you alive? 🦞</div></div>
+          <div class="chat-row right"><div class="bubble user">yeah i'm alive</div></div>
+          <div class="chat-row"><div class="bubble bot">proof of life accepted. the lobster is pleased. 🦞<br><br>🔥 <b>streak: 47 days</b> of not dying</div></div>
+        </div>
+      </div>
+      <div>
+        <h3 style="color:var(--green);margin-bottom:12px">🔥 Streaks = virality</h3>
+        <p style="font-size:16px;color:#ccc;margin-bottom:16px">"Day 47 of not dying" becomes a meme.</p>
+        <p>People screenshot their streaks. Share on social. The name "DontDie" is inherently viral.</p>
+        <p style="margin-top:16px">The check-in is the product <em>and</em> the marketing.</p>
+        <div style="margin-top:24px;background:#111;border-radius:12px;padding:16px 20px;border-left:3px solid var(--green)">
+          <p style="color:var(--green);font-weight:600;font-size:14px">Every reply = proof you're alive<br>Every streak = free marketing</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE 8: DEMO — SOS ═══════ -->
+<div class="slide">
+  <div class="stagger">
+    <div class="label red">LIVE DEMO</div>
+    <h2>SOS Emergency</h2>
+    <div class="split" style="margin-top:16px">
+      <div>
+        <p style="font-size:11px;color:#555;letter-spacing:2px;margin-bottom:8px">USER'S DEVICE</p>
+        <div class="phone">
+          <div class="phone-header">
+            <div class="phone-avatar">🦞</div>
+            <div><div class="phone-name">DontDie</div><div class="phone-status">● online</div></div>
+          </div>
+          <div class="chat-messages">
+            <div class="chat-row right"><div class="bubble user" style="font-weight:700;font-size:18px">SOS</div></div>
+            <div class="chat-row"><div class="bubble alert">🚨 got it. alerting your people RIGHT NOW.<br>what's happening?</div></div>
+            <div class="chat-row right"><div class="bubble user">chest pain can't breathe</div></div>
+            <div class="chat-row"><div class="bubble ok">✅ Mom &amp; Dad notified<br>📧 Email + 📱 SMS sent</div></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <p style="font-size:11px;color:#555;letter-spacing:2px;margin-bottom:8px">WHAT MOM RECEIVES</p>
+        <div class="notif">
+          <h3>🚨 EMERGENCY — DontDie Alert</h3>
+          <div class="field"><span class="field-icon">👤</span><p style="color:#fff"><b>Selina</b> triggered an SOS</p></div>
+          <div class="field"><span class="field-icon">📍</span><p style="color:#fff">San Francisco, CA</p></div>
+          <div class="field"><span class="field-icon">⚠️</span><p style="color:#fff">Chest pain, difficulty breathing</p></div>
+          <div class="field"><span class="field-icon">🏥</span><p style="color:#fff">Blood type O+, no allergies</p></div>
+          <div class="action">📞 CALL SELINA NOW →</div>
+          <p style="margin-top:12px;color:#FCA5A5;font-size:12px">If no answer, call 911 immediately.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE 9: ESCALATION ═══════ -->
+<div class="slide">
+  <div class="stagger">
+    <div class="label orange">ESCALATION</div>
+    <h2>Silence triggers the right response at the right time</h2>
+    <div class="esc-row">
+      <div class="esc gentle">
+        <div class="esc-time" style="color:var(--orange)">24h</div>
+        <div class="label orange" style="margin:8px 0">GENTLE NUDGE</div>
+        <p class="msg">"Hey, could you give Selina a call? She missed her check-in. It's probably nothing — but a quick call would put everyone at ease."</p>
+      </div>
+      <div class="esc urgent">
+        <div class="esc-time" style="color:var(--red)">48h</div>
+        <div class="label red" style="margin:8px 0">URGENT</div>
+        <p class="msg" style="color:#FCA5A5">"Go to Selina's apartment. Call police for a welfare check. 48 hours of silence is serious. Please act now."</p>
+      </div>
+    </div>
+    <div style="margin-top:24px;background:#111;border-radius:12px;padding:16px 20px;border:1px solid #222">
+      <p style="font-size:14px;color:#888">The tone escalates because the situation escalates. Not panic — <span style="color:#fff">precision</span>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE 10: CLOSING ═══════ -->
+<div class="slide cta-slide" style="text-align:center;align-items:center">
+  <div class="stagger" style="display:flex;flex-direction:column;align-items:center">
+    <div class="cmd">clawhub install dontdie</div>
+    <h2 style="color:#fff;margin-top:28px;max-width:700px">
+      One command. 60-second setup.<br>
+      Your AI checks if you're alive every day.
+    </h2>
+    <p class="serif" style="color:#FEE2E2;font-size:clamp(18px,2vw,26px);margin-top:24px;font-style:italic;max-width:600px;line-height:1.5">
+      92 million people living alone,<br>and all it takes is a lobster that cares.
+    </p>
+    <h1 style="color:#fff;margin-top:40px;font-size:clamp(36px,6vw,72px)">
+      Try not to die. <span style="font-size:.7em">🦞</span>
+    </h1>
+    <p style="color:rgba(255,255,255,.4);margin-top:40px;font-size:13px;letter-spacing:1px">github.com/yanqi7375/dontdie</p>
+  </div>
+</div>
+
+</div>
+
+<!-- Navigation -->
+<div class="nav">
+  <button onclick="go(-1)" title="Previous">‹</button>
+  <div class="dots" id="dots"></div>
+  <span class="counter" id="counter">1/10</span>
+  <button onclick="go(1)" title="Next">›</button>
+</div>
+
+<script>
+let cur=0;
+const slides=document.querySelectorAll('.slide');
+const total=slides.length;
+const dotsC=document.getElementById('dots');
+
+// Build dots
+for(let i=0;i<total;i++){
+  const d=document.createElement('div');
+  d.className='dot'+(i===0?' active':'');
+  d.onclick=()=>show(i);
+  dotsC.appendChild(d);
+}
+
+function show(n){
+  slides.forEach(s=>s.classList.remove('active'));
+  cur=Math.max(0,Math.min(n,total-1));
+  slides[cur].classList.add('active');
+  document.getElementById('counter').textContent=`${cur+1}/${total}`;
+  document.getElementById('progress').style.width=`${((cur+1)/total)*100}%`;
+  document.querySelectorAll('.dot').forEach((d,i)=>{
+    d.className='dot'+(i===cur?' active':'');
+  });
+}
+
+function go(d){show(cur+d)}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();go(1)}
+  if(e.key==='ArrowLeft'){e.preventDefault();go(-1)}
+});
+
+let tx=0;
+document.addEventListener('touchstart',e=>tx=e.touches[0].clientX);
+document.addEventListener('touchend',e=>{
+  const diff=tx-e.changedTouches[0].clientX;
+  if(Math.abs(diff)>50)go(diff>0?1:-1);
+});
+
+show(0);
+</script>
+</body>
+</html>

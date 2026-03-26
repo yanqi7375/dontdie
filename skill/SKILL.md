@@ -7,7 +7,7 @@ metadata:
     emoji: "🦞"
     commandName: dontdie
     always: true
-    homepage: https://github.com/selinahuang/dontdie
+    homepage: https://github.com/yanqi7375/dontdie
 ---
 
 # DontDie 🦞
@@ -52,12 +52,17 @@ Store all user data via `memory_store` / `memory_recall` / `memory_forget`. Per-
 | `[medical]` | fact | `[medical] allergies=penicillin, conditions=asthma` |
 | `[onboarding]` | fact | `[onboarding] completed=true` |
 | `[plan]` | preference | `[plan] cloud` (default) or `[plan] self-hosted` |
+| `[trial-start]` | fact | `[trial-start] 2026-03-25` (ISO date when user registered, for 3-day trial tracking) |
+| `[paid]` | fact | `[paid] false` (cloud plan payment status — true/false) |
 | `[api-key]` | entity | `[api-key] {DONTDIE_API_KEY}` (cloud plan only, set during registration) |
 | `[sos-event]` | fact | `[sos-event] id=001, triggered=..., resolved=false` |
+| `[notification-paused]` | fact | `[notification-paused] true` (set when trial expired and unpaid) |
 
 ---
 
 ## Daily Alive-Check
+
+> **Note:** Check-ins ALWAYS work regardless of payment status. Streaks always count. Only contact notifications are gated by payment.
 
 ### Cron Setup
 After onboarding, create a recurring cron job `dontdie-checkin` based on `[checkin-time]`.
@@ -151,6 +156,8 @@ Note: The recurring cron still fires during pause but the check-in is skipped. T
 ---
 
 ## SOS Emergency
+
+> **Payment & SOS:** During SOS, if trial expired and unpaid, still attempt to send notifications but warn user if API returns 403. Never let payment status delay SOS messaging — if the API rejects, tell user to contact people directly.
 
 ### Trigger Detection
 Monitor every message for SOS keywords from `{baseDir}/sos-keywords.md`.
@@ -252,6 +259,27 @@ When notifying contacts:
 3. If email succeeds but SMS fails, still report success (email is the primary channel)
 
 All notifications (SOS, escalation, resolved) are routed through this logic. Check `memory_recall` → `[plan]` to determine the delivery path. **Default is `cloud` if `[plan]` is not set.**
+
+### Payment Gate
+
+Before dispatching notifications:
+
+1. Check `[plan]`:
+   - If `self-hosted` → skip payment check, dispatch directly
+   - If `cloud` → continue to step 2
+
+2. Check trial status:
+   - Recall `[trial-start]`
+   - If within 3 days of trial-start → dispatch normally (trial active)
+   - If beyond 3 days → check `[paid]`
+
+3. If `[paid]` is false:
+   - Do NOT send notifications
+   - Tell user: "your 3-day free trial has ended. to keep your emergency contacts notified, upgrade for $2.90/quarter: [upgrade link]"
+   - "your daily check-ins still work! streaks keep counting. but notifications to your contacts are paused until you upgrade. 🦞"
+   - Store `[notification-paused] true` in memory
+
+4. If `[paid]` is true → dispatch normally
 
 ### Cloud Plan (`[plan] cloud` or unset)
 

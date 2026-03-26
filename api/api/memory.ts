@@ -17,18 +17,32 @@ function getRedis() {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
   const r = getRedis();
   if (!r) {
     return res.status(503).json({ error: "Redis not configured" });
   }
 
   const apiKey = req.headers["x-api-key"] || req.headers.authorization?.replace("Bearer ", "");
-  if (process.env.DONTDIE_API_KEY && apiKey !== process.env.DONTDIE_API_KEY) {
+  if (!process.env.DONTDIE_API_KEY || apiKey !== process.env.DONTDIE_API_KEY) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
   const { method } = req.query;
   const { userId, key, value, query } = req.body || {};
+
+  // Validate key parameter
+  if (key && key !== "*" && !/^[a-zA-Z0-9_:\-]{1,100}$/.test(key)) {
+    return res.status(400).json({ error: "Invalid key format. Use alphanumeric, underscore, colon, or hyphen (max 100 chars)" });
+  }
+
+  // Limit value size to 10KB
+  if (value !== undefined && JSON.stringify(value).length > 10240) {
+    return res.status(400).json({ error: "Value too large. Maximum 10KB" });
+  }
 
   if (!userId) {
     return res.status(400).json({ error: "userId is required" });

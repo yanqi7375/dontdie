@@ -8,6 +8,9 @@ CREATE TABLE IF NOT EXISTS users (
   language TEXT DEFAULT 'en',
   checkin_time TEXT DEFAULT '09:00',
   timezone TEXT DEFAULT 'America/New_York',
+  plan VARCHAR(20) DEFAULT 'cloud',
+  paid BOOLEAN DEFAULT false,
+  api_token VARCHAR(64),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

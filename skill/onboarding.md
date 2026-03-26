@@ -38,20 +38,34 @@ Run this when no `[onboarding]` memory exists.
 > alright {name}. before we go further — pick your plan. 🦞
 
 **English:**
-> **1. Cloud plan — $2.99/mo**
-> zero config. I handle SMS + email for you. just set up contacts and go. literally the "I don't want to think about infrastructure" option.
+> ☁️ **Cloud** — instant setup, zero config
+>    - Check-ins work immediately, forever free
+>    - Notifying your emergency contacts: **$2.90/quarter** (about $1/month)
+>    - 3-day free trial included — your contacts get notified right away
+>    - After trial: upgrade to keep notifications active
+>    - Why it costs: each SMS/email to your contacts costs us real money (Twilio + Resend)
 >
-> **2. Self-hosted — free forever**
-> you bring your own Twilio + Resend. more work, but $0. the "I compile my own kernel" option.
+> 🔧 **Self-hosted** — free forever, bring your own APIs
+>    - You provide your own Twilio + Resend API keys
+>    - Your contacts, your infrastructure, your cost
+>    - Takes ~5 min to set up
+>    - Great if you're a developer or want full control
 >
 > which one? just say **cloud** or **self-hosted**.
 
 **Chinese:**
-> **1. Cloud 云端版 — $2.99/月**
-> 零配置。短信和邮件我全包了。设置联系人就完事。适合不想折腾的人。
+> ☁️ **云托管** — 即装即用，零配置
+>    - 每日签到永久免费
+>    - 通知亲友功能：**$2.90/季度**（约 $1/月）
+>    - 含 3 天免费试用 — 注册后立即生效
+>    - 试用结束后需升级才能继续通知亲友
+>    - 为什么收费：每条短信/邮件都有真实成本（Twilio + Resend）
 >
-> **2. Self-hosted 自托管版 — 永久免费**
-> 你自己搞 Twilio 和 Resend。要折腾，但不花钱。适合喜欢自己编译内核的人。
+> 🔧 **自托管** — 永久免费，自备 API
+>    - 提供你自己的 Twilio + Resend API key
+>    - 你的联系人、你的基础设施、你的成本
+>    - 约 5 分钟配置完成
+>    - 适合开发者或想完全掌控的用户
 >
 > 选哪个？说 **cloud** 或者 **self-hosted** 就行。
 
@@ -60,10 +74,10 @@ Run this when no `[onboarding]` memory exists.
 → Store `[plan] cloud`
 
 **English:**
-> nice. zero config gang. I'll handle all the notification plumbing — SMS, email, the works. you just focus on not dying. 🦞
+> cloud it is! 🦞 check-ins are always free. notifying your contacts: $2.90/quarter with a 3-day free trial starting now. let's get your emergency contact set up.
 
 **Chinese:**
-> 不错。零配置大法好。短信、邮件我全搞定，你只要专注于不死就行。🦞
+> 选好了！🦞 签到永远免费。通知亲友功能 $2.90/季度，3天免费试用现在开始。来设置你的紧急联系人吧。
 
 → Continue to Step 3.
 
@@ -163,7 +177,7 @@ Run this when no `[onboarding]` memory exists.
 
 ### If user says something unclear:
 
-> I need you to pick one: **cloud** ($2.99/mo, I do everything) or **self-hosted** (free, you set up Twilio/Resend). which one? 🦞
+> I need you to pick one: **cloud** ($2.90/quarter, I do everything) or **self-hosted** (free, you set up Twilio/Resend). which one? 🦞
 
 ---
 
@@ -302,7 +316,7 @@ Store:
 > - say **help** → see all commands
 > - say **pause** → skip a day (I won't judge... much)
 >
-> **your plan:** {plan} {plan == "cloud" ? "($2.99/mo — I handle notifications)" : "(free — you handle Twilio/Resend)"}
+> **your plan:** {plan} {plan == "cloud" ? "($2.90/quarter — I handle notifications)" : "(free — you handle Twilio/Resend)"}
 >
 > try not to die. 🦞
 
@@ -316,7 +330,7 @@ Store:
 > - 发 **help** → 看所有指令
 > - 发 **pause** → 跳过一天（我不会评判的……大概）
 >
-> **你的方案：** {plan == "cloud" ? "云端版 ($2.99/月 — 通知我全包)" : "自托管版 (免费 — Twilio/Resend 你自己搞)"}
+> **你的方案：** {plan == "cloud" ? "云托管 ($2.90/季度 — 通知我全包)" : "自托管 (免费 — Twilio/Resend 你自己搞)"}
 >
 > 努力不要死掉。🦞
 
@@ -357,7 +371,7 @@ All keys stored during onboarding:
 Step 1: Welcome + Name → [user-name], [language]
          │
 Step 2: Plan Choice
-         ├── "cloud"       → [plan] cloud (zero config, $2.99/mo)
+         ├── "cloud"       → [plan] cloud (zero config, $2.90/quarter)
          └── "self-hosted"  → [plan] self-hosted (free, needs env vars)
          │
 Step 3: Emergency Contact #1 → [contact:1]

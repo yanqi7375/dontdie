@@ -1,17 +1,12 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { neon } from "@neondatabase/serverless";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  try {
-    const sql = neon(process.env.NEON_DATABASE_URL!);
-    const [{ count }] = await sql(`SELECT count(*) FROM users`);
-    return res.status(200).json({
-      status: "alive 🦞",
-      users: Number(count),
-      version: "2.0.0",
-    });
-  } catch (err: any) {
-    console.error("Status check error:", err);
-    return res.status(500).json({ status: "dead 💀", error: "Database unavailable" });
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
+
+  return res.status(200).json({
+    status: "alive",
+    version: "2.0.0",
+  });
 }

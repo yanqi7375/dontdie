@@ -16,15 +16,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const apiKey = req.headers["x-api-key"] || req.headers.authorization?.replace("Bearer ", "");
-  if (process.env.DONTDIE_API_KEY && apiKey !== process.env.DONTDIE_API_KEY) {
+  if (!process.env.DONTDIE_API_KEY || apiKey !== process.env.DONTDIE_API_KEY) {
     return res.status(401).json({ error: "Unauthorized" });
   }
+
+  const sql = neon(process.env.NEON_DATABASE_URL!);
 
   // Idempotency: prevent duplicate notifications
   const idempotencyKey = req.headers["x-idempotency-key"] as string;
   if (idempotencyKey) {
     try {
-      const sql = neon(process.env.NEON_DATABASE_URL!);
       const [existing] = await sql(
         `SELECT id FROM events WHERE details->>'idempotencyKey' = $1 LIMIT 1`,
         [idempotencyKey]
@@ -37,23 +38,77 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  const { userId, type, userName, contacts, location, medical, symptoms, message } = req.body;
+  const { userId, type, userName: rawUserName, location, medical, symptoms, message } = req.body;
 
-  if (!userId || !type || !contacts?.length) {
-    return res.status(400).json({ error: "userId, type, and contacts are required" });
+  // Validate notification type whitelist
+  const allowedTypes = ["sos", "escalation", "escalation_48h", "resolved", "location_update"];
+  if (!allowedTypes.includes(type)) {
+    return res.status(400).json({ error: `Invalid notification type. Allowed: ${allowedTypes.join(", ")}` });
   }
 
-  // Validate contacts
-  for (const contact of contacts) {
-    if (contact.phone && !/^\+\d{7,15}$/.test(contact.phone)) {
-      return res.status(400).json({ error: `Invalid phone format for ${contact.name}: must start with + followed by digits` });
-    }
-    if (contact.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) {
-      return res.status(400).json({ error: `Invalid email format for ${contact.name}` });
-    }
+  if (!userId || !type) {
+    return res.status(400).json({ error: "userId and type are required" });
   }
-  if (contacts.length > 10) {
-    return res.status(400).json({ error: "Maximum 10 contacts per notification" });
+
+  // Sanitize userName: strip URLs, limit to 100 chars, alphanumeric + spaces + basic Unicode only
+  const userName = rawUserName
+    ? String(rawUserName)
+        .replace(/https?:\/\/\S+/gi, "")
+        .replace(/[^\p{L}\p{N}\s'-]/gu, "")
+        .trim()
+        .slice(0, 100)
+    : "Unknown";
+
+  // Rate limiting: max 10 notifications per user per hour
+  try {
+    const recent = await sql(`SELECT count(*) FROM events WHERE user_id = $1 AND created_at > NOW() - INTERVAL '1 hour'`, [userId]);
+    if (Number(recent[0].count) >= 10) {
+      return res.status(429).json({ error: "Rate limit exceeded" });
+    }
+  } catch (_) {
+    // If rate limit check fails, proceed — safety notifications should not be blocked
+  }
+
+  // Fetch contacts from database instead of accepting from request body
+  const contactRows = await sql(`SELECT name, phone, email FROM contacts WHERE user_id = $1`, [userId]);
+  const contacts = contactRows as { name: string; phone?: string; email?: string }[];
+
+  if (!contacts.length) {
+    return res.status(400).json({ error: "No contacts found for this user. Register contacts first." });
+  }
+
+  // Payment gate: check if user is on paid plan or within trial
+  {
+    const userCheck = await sql(
+      `SELECT created_at, plan, paid FROM users WHERE id = $1`,
+      [userId]
+    );
+
+    if (!userCheck || userCheck.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const user = userCheck[0];
+
+    // Self-hosted users bypass payment check
+    if (user.plan === 'self-hosted') {
+      // continue to notifications
+    } else {
+      // Cloud plan: check trial (3 days) or paid status
+      const createdAt = new Date(user.created_at);
+      const now = new Date();
+      const daysSinceCreation = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
+      const isTrialActive = daysSinceCreation <= 3;
+      const isPaid = user.paid === true;
+
+      if (!isTrialActive && !isPaid) {
+        return res.status(403).json({
+          error: "Trial expired. Upgrade to continue notifications.",
+          upgradeUrl: "https://buy.stripe.com/dontdie",
+          trialDaysUsed: Math.floor(daysSinceCreation)
+        });
+      }
+    }
   }
 
   const results = { sms: [] as string[], email: [] as string[], errors: [] as string[] };
@@ -239,9 +294,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       break;
 
     default:
-      smsBody = message || `DontDie alert for ${userName} at ${now}`;
-      emailSubject = `DontDie alert: ${userName}`;
-      emailBody = message || `DontDie notification regarding ${userName} at ${now}.`;
+      // Should never reach here due to type whitelist above
+      return res.status(400).json({ error: "Invalid notification type" });
   }
 
   // Send SMS via Twilio
@@ -287,7 +341,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Log event to Neon
   try {
-    const sql = neon(process.env.NEON_DATABASE_URL!);
     await sql(
       `INSERT INTO events (user_id, type, details) VALUES ($1, $2, $3)`,
       [userId, type, JSON.stringify({ idempotencyKey, contacts: contacts.map((c: any) => c.name), sms: results.sms.length, email: results.email.length, errors: results.errors })]
