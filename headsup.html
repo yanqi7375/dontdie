@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0B4034">
+<title>额头猜词</title>
+<style>
+:root{
+  --felt:#0B4034;
+  --felt-2:#0E5343;
+  --felt-3:#072B23;
+  --ivory:#F3EADA;
+  --ivory-2:#E4D8C2;
+  --bevel:#C3B49A;
+  --ink:#16211D;
+  --ink-soft:#4A5A53;
+  --red:#C8322B;
+  --red-deep:#95221D;
+  --green:#2E9E5B;
+  --green-deep:#1C7040;
+  --gold:#D9A441;
+  --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Source Han Sans SC","Noto Sans CJK SC",sans-serif;
+  --serif:"Songti SC","STSong","Source Han Serif SC","Noto Serif CJK SC","SimSun",serif;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+
+html,body{height:100%;}
+body{
+  background:var(--felt);
+  background-image:
+    radial-gradient(120% 90% at 50% -10%, rgba(255,255,255,.10), rgba(255,255,255,0) 55%),
+    radial-gradient(100% 80% at 50% 115%, rgba(0,0,0,.45), rgba(0,0,0,0) 60%);
+  color:var(--ivory);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+  overflow:hidden;
+  overscroll-behavior:none;
+  touch-action:manipulation;
+}
+
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px;}
+
+/* ---------- screens ---------- */
+.screen{
+  position:fixed;inset:0;
+  display:none;
+  flex-direction:column;
+  padding:max(18px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left));
+}
+.screen.on{display:flex;}
+
+/* ---------- home ---------- */
+#home{overflow-y:auto;overscroll-behavior:contain;}
+.wrap{width:100%;max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:26px;padding-bottom:28px;}
+
+.masthead{display:flex;flex-direction:column;gap:10px;padding-top:8px;}
+.eyebrow{
+  font-size:11px;letter-spacing:.42em;text-transform:uppercase;
+  color:var(--gold);font-weight:600;
+}
+.masthead h1{
+  font-family:var(--serif);
+  font-size:clamp(46px,15vw,74px);
+  line-height:.98;font-weight:700;letter-spacing:.04em;
+  text-wrap:balance;
+  color:var(--ivory);
+  text-shadow:0 3px 0 rgba(0,0,0,.28);
+}
+.lede{font-size:14.5px;line-height:1.75;color:rgba(243,234,218,.72);max-width:34em;}
+.lede b{color:var(--ivory);font-weight:600;}
+
+.field{display:flex;flex-direction:column;gap:11px;}
+.label{
+  font-size:11.5px;letter-spacing:.24em;color:rgba(243,234,218,.55);
+  font-weight:600;display:flex;align-items:baseline;gap:10px;
+}
+.label span{letter-spacing:0;font-weight:400;font-size:12px;color:rgba(243,234,218,.38);}
+
+.nameInput{
+  width:100%;background:rgba(0,0,0,.24);
+  border:1px solid rgba(243,234,218,.16);
+  border-radius:12px;padding:14px 16px;
+  color:var(--ivory);font-size:16px;
+}
+.nameInput::placeholder{color:rgba(243,234,218,.32);}
+.nameInput:focus{border-color:var(--gold);outline:none;}
+
+/* tiles */
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px;}
+.tile{
+  position:relative;
+  background:linear-gradient(180deg,#FBF5EA 0%,var(--ivory) 62%,var(--ivory-2) 100%);
+  border-radius:11px;
+  border-bottom:5px solid var(--bevel);
+  padding:13px 10px 12px;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  color:var(--ink);
+  box-shadow:0 4px 10px rgba(0,0,0,.3);
+  transition:transform .12s ease, box-shadow .12s ease;
+}
+.tile:active{transform:translateY(2px);box-shadow:0 2px 5px rgba(0,0,0,.3);}
+.tile .mark{
+  width:34px;height:34px;border-radius:50%;
+  display:grid;place-items:center;
+  font-family:var(--serif);font-size:19px;font-weight:700;
+  background:var(--red);color:#FDF6E9;
+  box-shadow:inset 0 -2px 0 rgba(0,0,0,.18);
+}
+.tile .tname{font-size:13.5px;font-weight:600;letter-spacing:.02em;}
+.tile .tnum{font-size:11px;color:var(--ink-soft);font-variant-numeric:tabular-nums;}
+.tile[aria-pressed="true"]{
+  box-shadow:0 0 0 3px var(--gold), 0 6px 14px rgba(0,0,0,.38);
+}
+.tile[aria-pressed="true"] .mark{background:var(--green-deep);}
+
+/* segmented */
+.seg{display:flex;gap:8px;}
+.seg button{
+  flex:1;padding:13px 0;border-radius:11px;
+  background:rgba(0,0,0,.22);
+  border:1px solid rgba(243,234,218,.16);
+  font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;
+  color:rgba(243,234,218,.7);
+}
+.seg button[aria-pressed="true"]{
+  background:var(--ivory);color:var(--ink);border-color:var(--ivory);
+}
+
+.start{
+  width:100%;padding:20px;border-radius:14px;
+  background:linear-gradient(180deg,#D84139,var(--red));
+  border-bottom:5px solid var(--red-deep);
+  color:#FFF4E8;
+  font-family:var(--serif);font-size:26px;font-weight:700;letter-spacing:.3em;
+  text-indent:.3em;
+  box-shadow:0 8px 22px rgba(0,0,0,.36);
+  transition:transform .12s ease;
+}
+.start:active{transform:translateY(3px);}
+.start:disabled{opacity:.45;}
+
+.howto{display:flex;flex-direction:column;gap:9px;border-top:1px solid rgba(243,234,218,.14);padding-top:18px;}
+.step{display:flex;gap:12px;align-items:flex-start;font-size:13.5px;line-height:1.6;color:rgba(243,234,218,.74);}
+.step i{
+  flex:none;width:20px;height:20px;border-radius:50%;margin-top:1px;
+  background:rgba(243,234,218,.12);color:var(--gold);
+  display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:700;
+}
+
+.board{display:flex;flex-direction:column;gap:8px;}
+.row{
+  display:flex;align-items:center;gap:12px;
+  background:rgba(0,0,0,.2);border-radius:10px;padding:11px 14px;
+  font-size:14px;
+}
+.row .who{flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.row .meta{font-size:12px;color:rgba(243,234,218,.45);}
+.row .pts{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums;}
+
+.sysnote{font-size:12px;color:rgba(243,234,218,.42);line-height:1.6;}
+
+/* custom words */
+.customBox{display:none;flex-direction:column;gap:9px;}
+.customBox.on{display:flex;}
+.customBox textarea{
+  width:100%;min-height:104px;resize:vertical;
+  background:rgba(0,0,0,.24);border:1px solid rgba(243,234,218,.16);
+  border-radius:12px;padding:13px 15px;color:var(--ivory);
+  font-family:var(--sans);font-size:15px;line-height:1.6;
+}
+.customBox textarea:focus{border-color:var(--gold);outline:none;}
+
+/* ---------- countdown ---------- */
+#ready{align-items:center;justify-content:center;text-align:center;gap:22px;}
+#ready .num{
+  font-family:var(--serif);font-size:clamp(120px,42vh,240px);line-height:1;font-weight:700;
+  color:var(--ivory);text-shadow:0 6px 0 rgba(0,0,0,.25);
+}
+#ready .tip{font-size:17px;letter-spacing:.14em;color:var(--gold);}
+.pop{animation:pop .5s ease;}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* ---------- play ---------- */
+#play{padding:0;}
+.hud{
+  position:absolute;top:0;left:0;right:0;z-index:3;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:max(12px,env(safe-area-inset-top)) 20px 10px;
+  pointer-events:none;
+}
+.clock{
+  font-size:34px;font-weight:700;font-variant-numeric:tabular-nums;
+  letter-spacing:.02em;color:var(--ivory);
+  text-shadow:0 2px 6px rgba(0,0,0,.5);
+}
+.clock.urgent{color:#FFD9C9;animation:beat .6s ease infinite;}
+@keyframes beat{0%,100%{transform:scale(1)}50%{transform:scale(1.13)}}
+.tally{font-size:15px;font-weight:600;color:rgba(243,234,218,.8);text-shadow:0 2px 6px rgba(0,0,0,.5);}
+.tally b{font-family:var(--serif);font-size:26px;color:var(--gold);}
+
+.card{
+  position:absolute;inset:56px 16px 62px;
+  background:linear-gradient(180deg,#FBF5EA,var(--ivory) 70%,var(--ivory-2));
+  border-radius:16px;border-bottom:7px solid var(--bevel);
+  display:grid;place-items:center;
+  padding:18px;
+  box-shadow:0 12px 34px rgba(0,0,0,.4);
+}
+.word{
+  font-family:var(--serif);font-weight:700;color:var(--ink);
+  font-size:clamp(44px,15vh,150px);
+  line-height:1.1;letter-spacing:.02em;
+  text-align:center;word-break:break-word;
+}
+.word.long{font-size:clamp(34px,9.5vh,96px);}
+
+.zones{position:absolute;inset:0;z-index:2;display:flex;}
+.zone{flex:1;display:grid;place-items:end center;padding-bottom:max(16px,env(safe-area-inset-bottom));}
+.zone span{
+  font-size:12.5px;font-weight:600;letter-spacing:.2em;
+  color:rgba(243,234,218,.6);
+  background:rgba(0,0,0,.3);padding:8px 16px;border-radius:20px;
+  backdrop-filter:blur(3px);
+}
+.zone.ok span{color:#BFF0D2;}
+.zone.no span{color:#FFC9C4;}
+
+.flash{
+  position:absolute;inset:0;z-index:5;display:none;
+  place-items:center;flex-direction:column;gap:8px;
+}
+.flash.on{display:grid;}
+.flash .big{
+  font-family:var(--serif);font-size:clamp(58px,17vh,140px);font-weight:700;
+  color:#FFF8EC;text-shadow:0 5px 0 rgba(0,0,0,.2);
+}
+.flash .sub{font-size:clamp(18px,4.4vh,32px);color:rgba(255,248,236,.9);font-weight:600;}
+.flash.ok{background:var(--green);}
+.flash.no{background:var(--red);}
+
+.quit{
+  position:absolute;z-index:4;top:max(12px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);
+  font-size:12px;letter-spacing:.18em;color:rgba(243,234,218,.5);
+  padding:8px 14px;
+}
+
+/* ---------- result ---------- */
+#result{overflow-y:auto;overscroll-behavior:contain;}
+.score{display:flex;align-items:baseline;gap:14px;}
+.score .n{
+  font-family:var(--serif);font-size:clamp(76px,26vw,128px);line-height:1;font-weight:700;
+  color:var(--gold);font-variant-numeric:tabular-nums;
+}
+.score .u{font-size:16px;color:rgba(243,234,218,.6);}
+.recall{display:flex;flex-direction:column;gap:7px;}
+.item{
+  display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  background:rgba(0,0,0,.2);border-radius:10px;padding:12px 14px;
+  font-size:15.5px;
+}
+.item .dot{
+  flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;
+  font-size:13px;font-weight:700;
+}
+.item.ok .dot{background:var(--green);color:#fff;}
+.item.no .dot{background:rgba(243,234,218,.14);color:rgba(243,234,218,.5);}
+.item .w{flex:1;}
+.item.no .w{color:rgba(243,234,218,.5);}
+.item .hint{font-size:11px;color:rgba(243,234,218,.3);}
+
+.actions{display:flex;gap:10px;}
+.actions button{
+  flex:1;padding:17px 0;border-radius:13px;font-size:16px;font-weight:600;
+}
+.again{background:linear-gradient(180deg,#D84139,var(--red));border-bottom:4px solid var(--red-deep);color:#FFF4E8;}
+.back{background:rgba(0,0,0,.24);border:1px solid rgba(243,234,218,.2);color:rgba(243,234,218,.8);}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ 首页 ══════════ -->
+<div class="screen on" id="home">
+  <div class="wrap">
+    <header class="masthead">
+      <div class="eyebrow">贴 额 头 · 猜 词</div>
+      <h1>额头猜词</h1>
+      <p class="lede">一个人把手机<b>贴在额头</b>上，屏幕朝外；其他人看着词拼命比划。猜对了<b>手机往下扣</b>，卡壳了<b>往上抬</b>换下一个。没有陀螺仪也没关系——<b>右边点一下 = 猜对，左边 = 跳过</b>。</p>
+    </header>
+
+    <div class="field">
+      <div class="label">队伍名 <span>可留空</span></div>
+      <input class="nameInput" id="teamName" placeholder="比如：客厅一队" maxlength="12" autocomplete="off">
+    </div>
+
+    <div class="field">
+      <div class="label">选词库</div>
+      <div class="tiles" id="tiles"></div>
+      <div class="customBox" id="customBox">
+        <textarea id="customWords" placeholder="自己写词，一行一个，或者用逗号、顿号隔开：&#10;张三、李四、公司团建、周一早会"></textarea>
+        <div class="sysnote" id="customCount">还没有词</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="label">一局多久</div>
+      <div class="seg" id="seg">
+        <button data-sec="60" aria-pressed="true">60 秒</button>
+        <button data-sec="90" aria-pressed="false">90 秒</button>
+        <button data-sec="120" aria-pressed="false">120 秒</button>
+      </div>
+    </div>
+
+    <button class="start" id="startBtn">开 始</button>
+    <div class="sysnote" id="tiltNote">开始后会申请体感权限，允许了就能靠倾斜手机操作。</div>
+
+    <div class="board" id="board" hidden></div>
+
+    <div class="howto">
+      <div class="step"><i>1</i><div>横过来握住手机，屏幕朝外贴在额头上，别偷看。</div></div>
+      <div class="step"><i>2</i><div>其他人比划、描述，但不能说出词里的任何一个字。</div></div>
+      <div class="step"><i>3</i><div>猜对了往下扣手机（或点右半边），实在不会往上抬（或点左半边）。</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ 倒数 ══════════ -->
+<div class="screen" id="ready">
+  <div class="num" id="readyNum">3</div>
+  <div class="tip" id="readyTip">把手机贴到额头上</div>
+</div>
+
+<!-- ══════════ 游戏中 ══════════ -->
+<div class="screen" id="play">
+  <div class="hud">
+    <div class="clock" id="clock">60</div>
+    <div class="tally">已答对 <b id="tally">0</b></div>
+  </div>
+  <button class="quit" id="quitBtn">结束这局</button>
+  <div class="card"><div class="word" id="word">准备</div></div>
+  <div class="zones">
+    <button class="zone no" id="zoneNo" aria-label="跳过"><span>← 跳 过</span></button>
+    <button class="zone ok" id="zoneOk" aria-label="猜对了"><span>猜 对 了 →</span></button>
+  </div>
+  <div class="flash" id="flash"><div class="big" id="flashBig">对</div><div class="sub" id="flashSub"></div></div>
+</div>
+
+<!-- ══════════ 结算 ══════════ -->
+<div class="screen" id="result">
+  <div class="wrap">
+    <header class="masthead">
+      <div class="eyebrow" id="resEyebrow">这 一 局</div>
+      <div class="score"><div class="n" id="resScore">0</div><div class="u">个词</div></div>
+    </header>
+    <div class="field">
+      <div class="label">对过一遍 <span>点一下可以改判</span></div>
+      <div class="recall" id="recall"></div>
+    </div>
+    <div class="actions">
+      <button class="again" id="againBtn">再来一局</button>
+      <button class="back" id="backBtn">换词库</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ═══════════ 词库 ═══════════ */
+const PACKS = [
+  {key:"star", mark:"星", name:"华语明星", words:["周杰伦","刘德华","成龙","周星驰","张学友","王菲","邓紫棋","林俊杰","五月天","蔡依林","那英","李荣浩","毛不易","薛之谦","华晨宇","张艺兴","王一博","肖战","易烊千玺","杨幂","赵丽颖","迪丽热巴","刘亦菲","章子怡","巩俐","孙红雷","黄渤","沈腾","贾玲","岳云鹏","郭德纲","撒贝宁","何炅","汪涵","谢娜","李佳琦","徐峥","吴京","张艺谋","陈奕迅","李宇春","张韶涵","罗翔","董宇辉"]},
+  {key:"film", mark:"影", name:"影视动漫", words:["泰坦尼克号","甄嬛传","流浪地球","西游记","红楼梦","哈利波特","复仇者联盟","疯狂动物城","千与千寻","你的名字","让子弹飞","唐人街探案","战狼","我不是药神","你好李焕英","大话西游","无间道","功夫","喜剧之王","霸王别姬","卧虎藏龙","满江红","琅琊榜","请回答1988","鱿鱼游戏","权力的游戏","老友记","名侦探柯南","灌篮高手","龙珠","火影忍者","海贼王","熊出没","喜羊羊与灰太狼","猫和老鼠","冰雪奇缘","盗梦空间","星球大战","侏罗纪公园","蜡笔小新","哆啦A梦","甄嬛","西虹市首富","狂飙"]},
+  {key:"act", mark:"演", name:"动作表情", words:["打喷嚏","翻白眼","打哈欠","挖鼻孔","打呼噜","跳绳","游泳","骑自行车","开车","自拍","刷牙","洗头","化妆","剪指甲","系鞋带","跳舞","打篮球","踢足球","打乒乓球","弹钢琴","拉小提琴","唱歌","鼓掌","挥手告别","比心","举手投降","深呼吸","偷笑","大哭","生气跺脚","装睡","挠痒痒","举重","划船","爬楼梯","抢红包","扫码付款","排队","堵车","加班","熬夜","起床困难","打游戏","撸猫"]},
+  {key:"food", mark:"食", name:"好吃的", words:["小笼包","火锅","螺蛳粉","麻辣烫","煎饼果子","豆浆油条","麻婆豆腐","宫保鸡丁","北京烤鸭","兰州拉面","肉夹馍","生煎","烧烤","小龙虾","臭豆腐","糖葫芦","月饼","粽子","汤圆","饺子","珍珠奶茶","杨枝甘露","榴莲","寿司","披萨","汉堡","薯条","冰淇淋","蛋挞","泡面","老干妈","辣条","皮蛋","豆腐脑","关东煮","烤冷面","大盘鸡","佛跳墙","糖醋排骨","酸辣粉","肠粉","煲仔饭","咖喱","可乐"]},
+  {key:"animal", mark:"兽", name:"动物", words:["熊猫","长颈鹿","袋鼠","企鹅","鸭嘴兽","树懒","考拉","犀牛","河马","鳄鱼","章鱼","水母","螃蟹","龙虾","海豚","鲸鱼","鲨鱼","蝙蝠","猫头鹰","孔雀","鸵鸟","火烈鸟","刺猬","松鼠","兔子","乌龟","蜗牛","蚯蚓","蜜蜂","蝴蝶","蚂蚁","蟑螂","猴子","大猩猩","狮子","老虎","狐狸","狼","羊驼","骆驼","斑马","变色龙","萤火虫","穿山甲"]},
+  {key:"meme", mark:"梗", name:"网络热梗", words:["YYDS","栓Q","躺平","内卷","社死","emo了","摆烂","显眼包","尊嘟假嘟","爷青回","打工人","干饭人","秋天的第一杯奶茶","芭比Q了","绝绝子","破防了","上头","凡尔赛","舔狗","柠檬精","咸鱼","佛系","剁手","种草","吃瓜","键盘侠","尬聊","老铁","双击666","冲鸭","我裂开了","泪目","无语子","蚌埠住了","遥遥领先","真香","大冤种","特种兵旅游","电子榨菜","已读乱回","多巴胺","脆皮大学生","泼天的富贵","City不City"]},
+  {key:"job", mark:"业", name:"职业身份", words:["医生","护士","老师","警察","消防员","律师","会计","程序员","产品经理","设计师","主播","快递员","外卖员","网约车司机","空乘","飞行员","厨师","服务员","理发师","健身教练","摄影师","记者","主持人","演员","歌手","舞蹈演员","相声演员","魔术师","宇航员","科学家","考古学家","兽医","牙医","建筑师","农民","渔民","保安","保洁阿姨","房产中介","销售","HR","客服","翻译","侦探"]},
+  {key:"idiom", mark:"成", name:"成语", words:["画蛇添足","亡羊补牢","守株待兔","掩耳盗铃","井底之蛙","对牛弹琴","狐假虎威","刻舟求剑","拔苗助长","自相矛盾","杯弓蛇影","望梅止渴","卧薪尝胆","破釜沉舟","四面楚歌","指鹿为马","三顾茅庐","草木皆兵","一鸣惊人","惊弓之鸟","鹤立鸡群","画龙点睛","滥竽充数","塞翁失马","愚公移山","精卫填海","后羿射日","女娲补天","悬梁刺股","凿壁偷光","火上浇油","雪中送炭","锦上添花","张冠李戴","南辕北辙","东施效颦","班门弄斧","叶公好龙","朝三暮四","半途而废","熟能生巧","水落石出","一箭双雕","狼吞虎咽"]},
+  {key:"thing", mark:"物", name:"身边东西", words:["牙刷","雨伞","充电宝","数据线","耳机","键盘","鼠标","电风扇","空调","洗衣机","冰箱","微波炉","电饭煲","吹风机","剃须刀","指甲刀","拖鞋","眼镜","隐形眼镜","口罩","创可贴","体温计","剪刀","胶带","订书机","便利贴","计算器","台灯","蚊香","花露水","保温杯","吸管","遥控器","插座","垃圾桶","衣架","梯子","打火机","手电筒","钥匙","门铃","快递盒","行李箱","枕头"]},
+  {key:"mix", mark:"混", name:"全部混合", words:[]},
+  {key:"own", mark:"自", name:"自定义", words:[]}
+];
+PACKS.find(p=>p.key==="mix").words = PACKS.filter(p=>!["mix","own"].includes(p.key)).flatMap(p=>p.words);
+
+/* ═══════════ 状态 ═══════════ */
+const S = {
+  packKey:"act",
+  seconds:60,
+  queue:[], qi:0,
+  log:[],            // {word, ok}
+  endAt:0, timer:null,
+  locked:false,
+  running:false,
+  tiltReady:false,
+  armed:true,
+  board:[]           // {name, pack, score}
+};
+
+const $ = id => document.getElementById(id);
+const screens = {home:$("home"), ready:$("ready"), play:$("play"), result:$("result")};
+function show(name){ for(const k in screens) screens[k].classList.toggle("on", k===name); }
+
+/* ═══════════ 词库选择 ═══════════ */
+function customWords(){
+  return $("customWords").value.split(/[\n,，、;；\s]+/).map(s=>s.trim()).filter(Boolean);
+}
+function packWords(key){
+  return key==="own" ? customWords() : PACKS.find(p=>p.key===key).words;
+}
+function renderTiles(){
+  $("tiles").innerHTML = "";
+  PACKS.forEach(p=>{
+    const n = p.key==="own" ? customWords().length : p.words.length;
+    const b = document.createElement("button");
+    b.className = "tile";
+    b.setAttribute("aria-pressed", String(p.key===S.packKey));
+    b.innerHTML = `<span class="mark">${p.mark}</span><span class="tname">${p.name}</span><span class="tnum">${n} 个词</span>`;
+    b.onclick = ()=>{ S.packKey = p.key; renderTiles(); syncCustom(); };
+    $("tiles").appendChild(b);
+  });
+}
+function syncCustom(){
+  const own = S.packKey==="own";
+  $("customBox").classList.toggle("on", own);
+  const n = customWords().length;
+  $("customCount").textContent = n ? `${n} 个词，够玩了` : "还没有词，至少写 4 个";
+  $("startBtn").disabled = own && n < 4;
+}
+$("customWords").addEventListener("input", ()=>{ syncCustom(); renderTiles(); });
+
+$("seg").addEventListener("click", e=>{
+  const b = e.target.closest("button[data-sec]"); if(!b) return;
+  S.seconds = +b.dataset.sec;
+  [...$("seg").children].forEach(x=>x.setAttribute("aria-pressed", String(x===b)));
+});
+
+/* ═══════════ 声音 ═══════════ */
+let ac = null;
+function audioOn(){ try{ ac = ac || new (window.AudioContext||window.webkitAudioContext)(); if(ac.state==="suspended") ac.resume(); }catch(e){} }
+function beep(freq, dur, type="sine", gain=0.16){
+  if(!ac) return;
+  try{
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(gain, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + dur);
+    o.connect(g).connect(ac.destination);
+    o.start(); o.stop(ac.currentTime + dur);
+  }catch(e){}
+}
+const sndOk   = ()=>{ beep(880,.12,"triangle"); setTimeout(()=>beep(1320,.16,"triangle"),90); };
+const sndNo   = ()=>{ beep(200,.22,"sawtooth",.12); };
+const sndTick = ()=>{ beep(1200,.05,"square",.07); };
+const sndEnd  = ()=>{ beep(160,.5,"sawtooth",.2); setTimeout(()=>beep(110,.7,"sawtooth",.2),240); };
+const buzz    = ms =>{ try{ navigator.vibrate && navigator.vibrate(ms); }catch(e){} };
+
+/* ═══════════ 体感 ═══════════ */
+function onOrient(e){
+  if(e.beta === null || e.gamma === null) return;
+  S.tiltReady = true;
+  const r = Math.PI/180;
+  // 屏幕法线的竖直分量：+1 屏幕朝天，-1 屏幕朝地，0 竖直（贴额头）
+  const v = Math.cos(e.beta*r) * Math.cos(e.gamma*r);
+  if(!S.running || S.locked) return;
+  if(S.armed && v < -0.62){ S.armed = false; answer(true); }
+  else if(S.armed && v > 0.62){ S.armed = false; answer(false); }
+  else if(Math.abs(v) < 0.34){ S.armed = true; }
+}
+async function askMotion(){
+  try{
+    if(typeof DeviceOrientationEvent !== "undefined" && DeviceOrientationEvent.requestPermission){
+      const r = await DeviceOrientationEvent.requestPermission();
+      if(r !== "granted"){ $("tiltNote").textContent = "体感没开也能玩：点右半边算对，左半边跳过。"; return; }
+    }
+    window.addEventListener("deviceorientation", onOrient);
+    setTimeout(()=>{
+      $("tiltNote").textContent = S.tiltReady
+        ? "体感已就绪：往下扣 = 猜对，往上抬 = 跳过。"
+        : "这台设备读不到体感：点右半边算对，左半边跳过。";
+    }, 1200);
+  }catch(e){
+    $("tiltNote").textContent = "体感没开也能玩：点右半边算对，左半边跳过。";
+  }
+}
+
+/* ═══════════ 屏幕常亮 / 全屏 ═══════════ */
+let wakeLock = null;
+async function keepAwake(){
+  try{ if("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); }catch(e){}
+}
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && S.running) keepAwake(); });
+async function goBig(){
+  try{ if(document.documentElement.requestFullscreen && !document.fullscreenElement) await document.documentElement.requestFullscreen(); }catch(e){}
+  try{ if(screen.orientation && screen.orientation.lock) await screen.orientation.lock("landscape"); }catch(e){}
+}
+
+/* ═══════════ 出题 ═══════════ */
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function buildQueue(){ S.queue = shuffle(packWords(S.packKey).slice()); S.qi = 0; }
+function nextWord(){
+  if(S.qi >= S.queue.length){ const last = S.queue[S.queue.length-1]; shuffle(S.queue); if(S.queue[0]===last && S.queue.length>1) [S.queue[0],S.queue[1]]=[S.queue[1],S.queue[0]]; S.qi = 0; }
+  const w = S.queue[S.qi++];
+  const el = $("word");
+  el.textContent = w;
+  el.classList.toggle("long", w.length >= 6);
+  return w;
+}
+
+/* ═══════════ 一局 ═══════════ */
+$("startBtn").onclick = async ()=>{
+  audioOn();
+  await askMotion();
+  keepAwake();
+  goBig();
+  startRound();
+};
+
+function startRound(){
+  if(packWords(S.packKey).length < 4){ syncCustom(); return; }
+  buildQueue();
+  S.log = []; S.locked = true; S.running = false; S.armed = true;
+  $("tally").textContent = "0";
+  $("clock").textContent = S.seconds;
+  $("clock").classList.remove("urgent");
+  show("ready");
+
+  let n = 3;
+  $("readyNum").textContent = n;
+  $("readyNum").className = "num pop";
+  $("readyTip").textContent = "把手机贴到额头上";
+  beep(660,.12);
+  const iv = setInterval(()=>{
+    n--;
+    if(n > 0){
+      $("readyNum").textContent = n;
+      $("readyNum").className = "num pop"; void $("readyNum").offsetWidth;
+      beep(660,.12);
+    }else{
+      clearInterval(iv);
+      $("readyNum").textContent = "开始";
+      $("readyNum").className = "num pop"; void $("readyNum").offsetWidth;
+      $("readyTip").textContent = "";
+      beep(990,.3,"triangle");
+      setTimeout(beginPlay, 550);
+    }
+  }, 800);
+}
+
+let lastTick = 99;
+function beginPlay(){
+  show("play");
+  nextWord();
+  S.locked = false; S.running = true; S.armed = true;
+  S.endAt = performance.now() + S.seconds*1000;
+  lastTick = 99;
+  $("clock").textContent = S.seconds;
+  clearInterval(S.timer);
+  S.timer = setInterval(tick, 100);
+}
+
+function tick(){
+  const left = Math.max(0, (S.endAt - performance.now())/1000);
+  const secs = Math.ceil(left);
+  $("clock").textContent = secs;
+  $("clock").classList.toggle("urgent", secs <= 10);
+  if(secs <= 5 && secs > 0 && secs !== lastTick){ lastTick = secs; sndTick(); }
+  if(left <= 0) endRound();
+}
+
+function answer(ok){
+  if(!S.running || S.locked) return;
+  S.locked = true;
+  S.log.push({word: $("word").textContent, ok});
+  if(ok){
+    $("tally").textContent = S.log.filter(x=>x.ok).length;
+    sndOk(); buzz(45);
+  }else{
+    sndNo(); buzz([25,60,25]);
+  }
+  const f = $("flash");
+  f.className = "flash on " + (ok ? "ok" : "no");
+  $("flashBig").textContent = ok ? "对" : "过";
+  $("flashSub").textContent = ok ? "" : $("word").textContent;
+  setTimeout(()=>{
+    f.className = "flash";
+    if(S.running){ nextWord(); S.locked = false; }
+  }, ok ? 480 : 620);
+}
+
+$("zoneOk").onclick = ()=>answer(true);
+$("zoneNo").onclick = ()=>answer(false);
+$("quitBtn").onclick = ()=>endRound();
+document.addEventListener("keydown", e=>{
+  if(!S.running) return;
+  if(e.key === "ArrowRight" || e.key === " "){ e.preventDefault(); answer(true); }
+  if(e.key === "ArrowLeft"){ e.preventDefault(); answer(false); }
+  if(e.key === "Escape") endRound();
+});
+
+/* ═══════════ 结算 ═══════════ */
+function endRound(){
+  if(!S.running && !S.timer) return;
+  S.running = false;
+  clearInterval(S.timer); S.timer = null;
+  $("flash").className = "flash";
+  sndEnd(); buzz([80,60,180]);
+  try{ if(wakeLock){ wakeLock.release(); wakeLock = null; } }catch(e){}
+  renderResult(true);
+  show("result");
+}
+
+function renderResult(record){
+  const score = S.log.filter(x=>x.ok).length;
+  const name = ($("teamName").value || "").trim();
+  const pack = PACKS.find(p=>p.key===S.packKey).name;
+  $("resScore").textContent = score;
+  $("resEyebrow").textContent = name ? name.split("").join(" ") : "这 一 局";
+
+  const box = $("recall");
+  box.innerHTML = "";
+  if(!S.log.length){
+    box.innerHTML = `<div class="item no"><span class="dot">–</span><span class="w">这局一个词都没过，下次别怂。</span></div>`;
+  }
+  S.log.forEach((it, i)=>{
+    const b = document.createElement("button");
+    b.className = "item " + (it.ok ? "ok" : "no");
+    b.innerHTML = `<span class="dot">${it.ok ? "✓" : "×"}</span><span class="w">${it.word}</span><span class="hint">改判</span>`;
+    b.onclick = ()=>{
+      S.log[i].ok = !S.log[i].ok;
+      const s = S.log.filter(x=>x.ok).length;
+      $("resScore").textContent = s;
+      if(S.board.length && S.board[0]._live) S.board[0].score = s;
+      renderBoard();
+      renderResult(false);
+    };
+    box.appendChild(b);
+  });
+
+  if(record){
+    S.board.forEach(r=> r._live = false);
+    S.board.unshift({name: name || "无名队", pack, score, _live: true});
+    renderBoard();
+  }
+}
+
+function renderBoard(){
+  const box = $("board");
+  if(!S.board.length){ box.hidden = true; return; }
+  box.hidden = false;
+  const ranked = S.board.slice().sort((a,b)=>b.score-a.score);
+  box.innerHTML = `<div class="label">本场记分 <span>共 ${S.board.length} 局</span></div>` +
+    ranked.map(r=>`<div class="row"><span class="who">${escapeHtml(r.name)}</span><span class="meta">${r.pack}</span><span class="pts">${r.score}</span></div>`).join("");
+}
+function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+$("againBtn").onclick = ()=>{ audioOn(); keepAwake(); startRound(); };
+$("backBtn").onclick = ()=>{ show("home"); renderTiles(); syncCustom(); };
+
+/* ═══════════ 启动 ═══════════ */
+renderTiles();
+syncCustom();
+</script>
+</body>
+</html>
