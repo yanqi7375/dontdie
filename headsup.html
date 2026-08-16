@@ -26,34 +26,37 @@
 
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 
-html,body{height:100%;}
+html{min-height:100%;}
 body{
+  min-height:100vh;
+  min-height:100dvh;
   background:var(--felt);
+  background-attachment:fixed;
   background-image:
     radial-gradient(120% 90% at 50% -10%, rgba(255,255,255,.10), rgba(255,255,255,0) 55%),
     radial-gradient(100% 80% at 50% 115%, rgba(0,0,0,.45), rgba(0,0,0,0) 60%);
   color:var(--ivory);
   font-family:var(--sans);
   -webkit-font-smoothing:antialiased;
-  overflow:hidden;
   overscroll-behavior:none;
   touch-action:manipulation;
 }
+/* 只有游戏进行中才锁住滚动 */
+body.playing{overflow:hidden;}
 
 button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;}
 :focus-visible{outline:2px solid var(--gold);outline-offset:3px;}
 
 /* ---------- screens ---------- */
+/* 用正常文档流 + min-height，页面被嵌在自动算高度的框里也不会塌成空白 */
 .screen{
-  position:fixed;inset:0;
   display:none;
   flex-direction:column;
+  min-height:100vh;
+  min-height:100dvh;
   padding:max(18px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left));
 }
 .screen.on{display:flex;}
-
-/* ---------- home ---------- */
-#home{overflow-y:auto;overscroll-behavior:contain;}
 .wrap{width:100%;max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:26px;padding-bottom:28px;}
 
 .masthead{display:flex;flex-direction:column;gap:10px;padding-top:8px;}
@@ -184,7 +187,10 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;}
 @keyframes pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
 
 /* ---------- play ---------- */
-#play{padding:0;}
+#play{
+  padding:0;position:relative;overflow:hidden;
+  height:100vh;height:100dvh;min-height:300px;
+}
 .hud{
   position:absolute;top:0;left:0;right:0;z-index:3;
   display:flex;align-items:center;justify-content:space-between;
@@ -248,7 +254,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;}
 }
 
 /* ---------- result ---------- */
-#result{overflow-y:auto;overscroll-behavior:contain;}
+#result .wrap{gap:22px;}
 .score{display:flex;align-items:baseline;gap:14px;}
 .score .n{
   font-family:var(--serif);font-size:clamp(76px,26vw,128px);line-height:1;font-weight:700;
@@ -404,7 +410,11 @@ const S = {
 
 const $ = id => document.getElementById(id);
 const screens = {home:$("home"), ready:$("ready"), play:$("play"), result:$("result")};
-function show(name){ for(const k in screens) screens[k].classList.toggle("on", k===name); }
+function show(name){
+  for(const k in screens) screens[k].classList.toggle("on", k===name);
+  document.body.classList.toggle("playing", name==="play" || name==="ready");
+  if(name!=="play") window.scrollTo(0,0);
+}
 
 /* ═══════════ 词库选择 ═══════════ */
 function customWords(){
